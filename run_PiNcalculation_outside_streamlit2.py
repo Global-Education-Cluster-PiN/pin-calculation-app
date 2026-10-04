@@ -39,56 +39,60 @@ import os, glob
 
 
 
-hybrid_country= True
+hybrid_country= False
 step_2_hpc= False
 
 
-## MMR
-
+## BFA 2026
+country_code="BFA"
 status_var = 'pop_group'
 access_var = 'edu_access'
-teacher_disruption_var = 'edu_disrupted_teacher'
-idp_disruption_var = 'edu_disrupted_displaced'
-natural_hazard_var ='no_indicator'
+teacher_disruption_var = 'edu_teachers'
+idp_disruption_var = 'edu_displaced'
+armed_disruption_var = 'no_indicator'#'edu_disrupted_occupation'no_indicator
+natural_hazard_var = 'no_indicator'
 natural_hazard_var_sev = None
-additional_last_var = 'no_indicator'
-additional_last_sev = None
-additional_2_last_var = 'no_indicator'
-additional_2_last_sev = None
-armed_disruption_var = 'edu_disrupted_attack'#'edu_disrupted_occupation'no_indicator
-barrier_var = 'edu_barrier'
-selected_severity_4_barriers = [
-    "Protection/safety risks while commuting to school",
-    "Protection/safety risks while at school",
-    "Child needs to work at home or on the household's own farm (i.e. is not earning an income for these activities, but may allow other family members to earn an income)",
-    "Child participating in income generating activities outside of the home",
-    "Child marriage, engagement or pregnancies",
-    "Discrimination or stigmatization of the child for any reason",
-    "Unable to enroll in school due to lack of documentation"]
-selected_severity_5_barriers = ["Child is associated with armed forces or armed groups", "Pregnancy"]
+additional_last_var =  'edu_incident_trajet'
+additional_last_sev = 4
+additional_2_last_var = 'edu_incident_ecol'
+additional_2_last_sev = 4
+barrier_var = 'edu_barriers'
+selected_severity_4_barriers = ["Risques de protection à l’école (tels que le harcèlement physique et verbal, risque de viol, les attaques contre les écoles ou d’autres incidents de protection)",
+"Risques de protection pendant le trajet vers l’école (tels que les incidents de harcèlement physique et verbal, risque de viol ou d’autres incidents de protection)",
+"L’enfant doit travailler à la maison ou dans la ferme du ménage (c'est-à-dire qu'il ne gagne pas de revenu pour ces activités, mais peut permettre à d'autres membres de la famille de gagner un revenu)",
+"L'enfant participe à des activités génératrices de revenus en dehors du ménage",
+"Mariage, fiançailles",                                                       
+]
+selected_severity_5_barriers = ["Grossesse",
+"Une interdiction empêche l'enfant d'aller à l'école"
+]
 #"---> None of the listed barriers <---"
 #"Child is associated with armed forces or armed groups "
-age_var = 'ind_age'
-gender_var = 'ind_gender'
+age_var = 'sne_enfant_ind_age'
+gender_var = 'sne_enfant_ind_gender'
 start_school = 'September'
-country= 'Myanmar -- MMR'
+country= 'Burkina Faso -- BFA'
 
-selected_language = 'label::english (en)'
+# selected_language = 'label::english (en)'
+selected_language = 'label::French'
 
 #admin_var = 'Admin_3: Townships'#'Admin_2: Regions'
  
 # 'Admin_3: Townships'
-admin_var = 'admin1'#'Admin_2: Regions' 
+admin_var = 'admin2'#'Admin_2: Regions'
+ 
+# 'Admin_3: Townships'
+#admin_var = 'Admin_1: States/Regions'#'Admin_2: Regions' 
 
-vector_cycle = [10,14]
+vector_cycle = [11,15]
 single_cycle = (vector_cycle[1] == 0)
 primary_start = 6
 secondary_end = 17
-label = 'label::english (en)'
+label = 'label::French'
 
 # Path to your Excel file
-excel_path = 'input/MMR/REACH_MSNA 2026_Dataset.xlsx'
-excel_path_ocha = 'input/MMR/Template_Population_figures.xlsx'
+excel_path = 'input/BFA/REACH I BFA I 2025 MSNA-eduPlatform.xlsx'
+excel_path_ocha = 'input/BFA/BFA_ocha_FINAL__1909.xlsx'
 #excel_path_ocha = 'input/test_ocha.xlsx'
 
 # Load the Excel file
@@ -102,8 +106,8 @@ for sheet_name in xls.sheet_names:
     dfs[sheet_name] = pd.read_excel(xls, sheet_name=sheet_name)
 
 # Access specific dataframes
-edu_data = dfs['indiv_clean_data']
-household_data = dfs['main_clean_data']
+edu_data = dfs['indvidual']
+household_data = dfs['main']
 survey_data = dfs['survey']
 choice_data = dfs['choices']
 
@@ -170,7 +174,7 @@ edu_data_severity = add_severity(country,
 
 
 
-file_path = 'output_validation/00_edu_data_with_severity_MMR.xlsx'
+file_path = 'output_validation/'+country_code+'/00_edu_data_with_severity.xlsx'
 # Save the DataFrame to an Excel file
 
 if(type(edu_data_severity) is tuple):
