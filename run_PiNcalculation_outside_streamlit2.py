@@ -140,12 +140,12 @@ edu_data, household_data, survey_data, choice_data, messages = clean_make_datase
     admin_var, vector_cycle, start_school, status_var,
     selected_language)
 
-# status_var = "pop_status_group"
-# age_var = "ind_age"
-# gender_var = "ind_gender"
-# barrier_var = "edu_barrier_final"
+status_var = "pop_status_group"
+age_var = "ind_age"
+gender_var = "ind_gender"
+barrier_var = "edu_barrier_final"
 
-edu_data_severity = add_severity(country,
+edu_data_severity, drop_msg = add_severity(country,
                                 edu_data,
                                 household_data,
                                 choice_data,
@@ -174,11 +174,53 @@ edu_data_severity = add_severity(country,
 
 
 
-file_path = 'output_validation/'+country_code+'/00_edu_data_with_severity.xlsx'
-# Save the DataFrame to an Excel file
+if drop_msg:
+    print(drop_msg)
 
-if(type(edu_data_severity) is tuple):
-    edu_data_severity_df=pd.DataFrame(edu_data_severity[0]).copy()
-    edu_data_severity_df.to_excel(file_path, index=False, engine='openpyxl')
+out_dir = os.path.join('output_validation', country_code)
+os.makedirs(out_dir, exist_ok=True)
+edu_data_severity.to_excel(os.path.join(out_dir, '00_edu_data_with_severity.xlsx'), index=False, engine='openpyxl')
+
+
+##################################################################################################################################################################################################################
+#############################################################################        FINAL OUTPUTS (same steps as page 3)        ################################################################################
+##################################################################################################################################################################################################################
+
+# Population-group mapping asked on page 2: values from your status column (None if not present)
+host_value, idp_value, returnee_value, refugee_value, other_value = "non_pdi", "pdi", None, None, None
+
+(_, _, _, _, _, _, _, _, _, indicator_per_admin_status, _, _, _, _, _, _, _, _,
+ Tot_PiN_JIAF, _, final_overview_df, final_overview_df_OCHA,
+ final_overview_dimension_df, final_overview_dimension_df_in_need,
+ Tot_PiN_by_admin, country_label) = calculatePIN(
+    country, edu_data_severity, household_data, choice_data, survey_data, ocha_data, mismatch_ocha_data,
+    access_var, teacher_disruption_var, idp_disruption_var, armed_disruption_var, natural_hazard_var,
+    barrier_var, selected_severity_4_barriers, selected_severity_5_barriers,
+    age_var, gender_var, label, admin_var, vector_cycle, start_school, status_var,
+    host_value, idp_value, returnee_value, refugee_value, other_value,
+    mismatch_admin, selected_language, hybrid_country)
+
+if selected_language == "French":
+    snapshot = create_snapshot_PiN_FR(country_label, final_overview_df, final_overview_df_OCHA,
+                                      final_overview_dimension_df, final_overview_dimension_df_in_need,
+                                      selected_language=selected_language, step1=False)
 else:
-    edu_data_severity[0].to_excel(file_path, index=False, engine='openpyxl')
+    snapshot = create_snapshot_PiN(country_label, final_overview_df, final_overview_df_OCHA,
+                                   final_overview_dimension_df, final_overview_dimension_df_in_need,
+                                   selected_language=selected_language)
+
+outputs = {
+    f"PiN_results_{country_label}.xlsx": create_output(
+        country_label, Tot_PiN_JIAF, final_overview_df, final_overview_df_OCHA, "PiN TOTAL",
+        admin_var, ocha=True, tot_severity=Tot_PiN_by_admin, selected_language=selected_language),
+    f"PiN_by_indicator_{country_label}.xlsx": create_indicator_output(
+        country_label, indicator_per_admin_status, admin_var=admin_var),
+    f"PiN_snapshot_{country_label}.docx": snapshot,
+}
+for layer, buf in make_map_severity(country, pin_data=Tot_PiN_by_admin, hpc_df=ocha_data).items():
+    outputs[f"{country_label}_{layer.replace(' ', '_')}.png"] = buf
+
+for name, buf in outputs.items():
+    with open(os.path.join(out_dir, name), "wb") as f:
+        f.write(buf.getvalue())
+    print("saved", os.path.join(out_dir, name))
