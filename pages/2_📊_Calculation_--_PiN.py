@@ -83,6 +83,7 @@ if 'vector_cycle' not in st.session_state:
 ## INFO ADMIN PER COUNTRY ##
 admin_levels_per_country = {
     'Afghanistan -- AFG': ['Admin_1: Region', 'Admin_2: Province', 'Admin_3: Districts'],
+    'Bangladesh -- BGD': ['Admin_1: Divisions (bibhag)', 'Admin_2: Districts (zila)', 'Admin_3: Upazilas'],
     'Burkina Faso -- BFA': ['Admin_1: Regions (Région)', 'Admin_2: Province', 'Admin_3: Department (Département)'],
     'Cameroon -- CMR': ['Admin_1', 'Admin_2', 'Admin_3'],
     'Central African Republic -- CAR': ['Admin_1: Prefectures (préfectures)', 'Admin_2: Sub-prefectures (sous-préfectures)', 'Admin_3: Communes'],
@@ -90,20 +91,20 @@ admin_levels_per_country = {
     'Ethiopia -- ETH':['Admin_1', 'Admin_2', 'Admin_3'],
     'Haiti -- HTI': ['Admin_1: Departments (départements)', 'Admin_2: Arrondissements', 'Admin_3: Communes'],
     'Iraq -- IRQ': ['Admin_1: Governorates', 'Admin_2: Districts (aqḍyat)', 'Admin_3: Sub-districts (naḥiyat)'],
-    'Lemuria -- LMR':['Admin_1: Province', 'Admin_2: District', 'Admin_3: Subdistrict'] ,
     'Kenya -- KEN': ['Admin_1: Counties', 'Admin_2: Sub-counties (kaunti ndogo)', 'Admin_3: Wards (mtaa)'],
-    'Bangladesh -- BGD': ['Admin_1: Divisions (bibhag)', 'Admin_2: Districts (zila)', 'Admin_3: Upazilas'],
     'Lebanon -- LBN': ['Admin_1: Governorates', 'Admin_2: Districts (qaḍya)', 'Admin_3: Municipalities'],
-    'Moldova -- MDA': ['Admin_1: Districts', 'Admin_2: Cities', 'Admin_3: Communes'],
     'Mali -- MLI': ['Admin_1: Régions', 'Admin_2: Cercles', 'Admin_3: Arrondissements'],
+    'Moldova -- MDA': ['Admin_1: Districts', 'Admin_2: Cities', 'Admin_3: Communes'],
     'Mozambique -- MOZ': ['Admin_1: Provinces (provincias)', 'Admin_2: Districts (distritos)', 'Admin_3: Postos'],
     'Myanmar -- MMR': ['Admin_1: States/Regions', 'Admin_2: Districts', 'Admin_3: Townships'],
     'Niger -- NER': ['Admin_1: Régions ', 'Admin_2: Départements', 'Admin_3: Communes'],
-    'Syria -- SYR': ['Admin_1: Governorates', 'Admin_2: Districts (mintaqah)', 'Admin_3: Subdistricts (nawaḥi)'],
-    'Ukraine -- UKR': ['Admin_1: Oblasts', 'Admin_2: Raions', 'Admin_3: Hromadas'],
     'Somalia -- SOM': ['Admin_1: States', 'Admin_2: Districts', 'Admin_3: sub-Districts'],
     'South Sudan -- SSD':['Admin_1', 'Admin_2', 'Admin_3'], 
     'Sudan -- SDN':['Admin_1', 'Admin_2', 'Admin_3'],
+    'Syria -- SYR': ['Admin_1: Governorates', 'Admin_2: Districts (mintaqah)', 'Admin_3: Subdistricts (nawaḥi)'],
+    'Ukraine -- UKR': ['Admin_1: Oblasts', 'Admin_2: Raions', 'Admin_3: Hromadas'],
+    'Venezuela -- VEN':['Admin_1', 'Admin_2', 'Admin_3'], 
+    'Lemuria -- LMR':['Admin_1: Province', 'Admin_2: District', 'Admin_3: Subdistrict'] ,
     'Sparkea -- SPR' :['Admin_1: Region', 'Admin_2: District', 'Admin_3: Commune']
 }
 
