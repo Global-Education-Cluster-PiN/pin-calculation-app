@@ -27,10 +27,31 @@ st.title(translations["title_page1"])
 ##-------------------------------------   Variables   -----------------------------------------------------
 
 countries = ['no selection',
-    'Afghanistan -- AFG', 'Burkina Faso -- BFA', 'Cameroon -- CMR', 'Central African Republic -- CAR', 
-    'Democratic Republic of the Congo -- DRC', 'Ethiopia -- ETH', 'Haiti -- HTI', 'Iraq -- IRQ', 'Lemuria -- LMR','Kenya -- KEN', 
-    'Bangladesh -- BGD', 'Lebanon -- LBN', 'Moldova -- MDA', 'Mali -- MLI', 'Mozambique -- MOZ', 
-    'Myanmar -- MMR', 'Niger -- NER','Nigeria -- NRA', 'Syria -- SYR', 'Ukraine -- UKR', 'Somalia -- SOM', 'South Sudan -- SSD','Sudan -- SDN','Sparkea -- SPR'
+                'Afghanistan -- AFG',
+                'Bangladesh -- BGD',
+                'Burkina Faso -- BFA',
+                'Cameroon -- CMR',
+                'Central African Republic -- CAR',
+                'Democratic Republic of the Congo -- DRC',
+                'Ethiopia -- ETH',
+                'Haiti -- HTI',
+                'Iraq -- IRQ',
+                'Kenya -- KEN',
+                'Lebanon -- LBN',
+                'Mali -- MLI',
+                'Moldova -- MDA',
+                'Mozambique -- MOZ',
+                'Myanmar -- MMR',
+                'Niger -- NER',
+                'Nigeria -- NRA',
+                'Somalia -- SOM',
+                'South Sudan -- SSD',
+                'Sudan -- SDN',
+                'Syria -- SYR',
+                'Ukraine -- UKR',
+                'Venezuela -- VEN',
+                'Lemuria -- LMR',
+                'Sparkea -- SPR'
 ]
 REQUIRED_COLUMNS = {
     'uuid': {'uuid', '_uuid', 'uuid_X'},
@@ -411,7 +432,9 @@ st.session_state['step_2_hpc'] = False
 if is_scenario_2: st.session_state['step_2_hpc'] = True 
 
 #----- Step 3: Select Available Data Sources
-alternative_countries = ['Niger -- NER', 'Nigeria -- NRA', 'Mozambique -- MOZ']
+alternative_countries = ['Niger -- NER',
+                        'Nigeria -- NRA',
+                        'Mozambique -- MOZ']
 
 use_full_selection = (selected_country in alternative_countries) and not is_scenario_2
 #st.subheader(translations["select_data_section_2"])

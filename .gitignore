@@ -2,4 +2,8 @@ output_validation/
 to_be_ingnored_checked/
 .streamlit/secrets.toml
 *.jpeg
+.venv/
+__pycache__/
+*.pyc
+input_map/old/
 input/
