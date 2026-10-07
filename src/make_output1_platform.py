@@ -96,6 +96,7 @@ def merge_2025_contextDB (country , ocha_data , pin_2025 , context_db_folder ):
     severity_cols = [col for col in complete_output.columns if 'severity' in col]
     if severity_cols:
         mask_all_severity_nan = complete_output[severity_cols].isna().all(axis=1)
+        complete_output[severity_cols] = complete_output[severity_cols].astype(object)
         complete_output.loc[mask_all_severity_nan, severity_cols] = "Missing MSNA data for 2024 AND 2025"
 
 
