@@ -7,6 +7,30 @@ from openpyxl.cell.cell import MergedCell  # Import MergedCell
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.utils import get_column_letter
 
+ADMIN_LABEL_COL = 'admin_label'
+NO_ADMIN_LABEL = 'No name in population file'
+
+
+def add_admin_label(df, ocha_data):
+    """
+    Return a copy of df with the admin name from the OCHA population file
+    inserted as the 2nd column. The first column of df must hold the admin P-code.
+    Returns df unchanged if there is no OCHA data, df is empty, or the label is already there.
+    """
+    if ocha_data is None or df is None or df.empty or ADMIN_LABEL_COL in df.columns:
+        return df
+    if not {'Admin Pcode', 'Admin'}.issubset(ocha_data.columns):
+        return df
+
+    lookup = ocha_data[['Admin Pcode', 'Admin']].dropna(subset=['Admin Pcode']).copy()
+    lookup['Admin Pcode'] = lookup['Admin Pcode'].astype(str).str.strip()
+    name_map = lookup.drop_duplicates('Admin Pcode').set_index('Admin Pcode')['Admin']
+
+    out = df.copy()
+    codes = out.iloc[:, 0].astype(str).str.strip()
+    out.insert(1, ADMIN_LABEL_COL, codes.map(name_map).fillna(NO_ADMIN_LABEL))
+    return out
+
 
 int_2 = '2.0'
 int_3 = '3.0'
@@ -377,7 +401,7 @@ def apply_final_formatting(country_name, workbook, overview_df, small_overview_d
 
 
 # Function to create output with final formatting
-def create_output(country_label, dataframes, overview_df, small_overview_df, overview_sheet_name, admin_var, ocha=True, tot_severity=None, selected_language='English', parameters=None):
+def create_output(country_label, dataframes, overview_df, small_overview_df, overview_sheet_name, admin_var, ocha=True, tot_severity=None, selected_language='English', parameters=None, ocha_data=None):
     country_name = country_label.split('__')[0]  # Extract the part before the "__"
     print("inside create_output")
     label_overall_severity = 'Overall PiN and severity'
@@ -391,11 +415,13 @@ def create_output(country_label, dataframes, overview_df, small_overview_df, ove
 
         # Write the tot_severity sheet if it is provided
         if tot_severity is not None:
+            tot_severity = add_admin_label(tot_severity, ocha_data)
             tot_severity.to_excel(writer, sheet_name=label_overall_severity, index=False)
 
         # Write the category sheets
         for category, df in dataframes.items():
             sheet_name = f"{overview_sheet_name.split()[0]} -- {category}"
+            df = add_admin_label(df, ocha_data)
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
         if parameters:
@@ -448,7 +474,7 @@ def create_output(country_label, dataframes, overview_df, small_overview_df, ove
     return formatted_output
 
 
-def create_indicator_output(country_label, indicator_dataframes, admin_var, selected_language='English'):
+def create_indicator_output(country_label, indicator_dataframes, admin_var, selected_language='English', ocha_data=None):
     """
     Creates an Excel file for indicator-based data, applying formatting.
 
@@ -457,6 +483,7 @@ def create_indicator_output(country_label, indicator_dataframes, admin_var, sele
     - indicator_dataframes (dict): Dictionary of DataFrames categorized by indicator.
     - admin_var (str): The administrative variable used in the dataset.
     - selected_language (str, default='English'): Language setting for headers.
+    - ocha_data (DataFrame, optional): OCHA population file; if given, adds 'admin_label' after the P-code.
 
     Returns:
     - BytesIO: The formatted Excel file as an in-memory object.
@@ -473,6 +500,7 @@ def create_indicator_output(country_label, indicator_dataframes, admin_var, sele
 
         for category, df in indicator_dataframes.items():
             # Rename columns: Add (% of children) after ":" unless they have (ToT # children)
+            df = add_admin_label(df, ocha_data)
             modified_dataframes[category] = df
 
             # Write to Excel, ensuring sheet names stay within limits
