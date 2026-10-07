@@ -39,87 +39,48 @@ import os, glob
 
 
 
-hybrid_country= False
-step_2_hpc= False
+from run_config import CASES, ACTIVE_CASE
 
+cfg = CASES[ACTIVE_CASE]
 
-
-
-## SSD
-
-status_var = 'what_is_the_residence_status_population_group_of_this_household'
-access_var = 'g_1_did_the_child_attend_school_or_any_early_childhood_education_program_at_any_time_during_the_2025_school_year'
-teacher_disruption_var = 'g_3_2_teachers_absence'
-idp_disruption_var = 'g_3_3_school_used_as_a_shelter_by_displaced_persons'
-armed_disruption_var = 'g_3_4_direct_attack_on_education_such_as_the_school_being_occupied_by_armed_forces_non_state_armed_groups_or_the_school_being_hit_by_munitions_burning_or_theft_looting'#'edu_disrupted_occupation'no_indicator
-natural_hazard_var = 'no_indicator'
-barrier_var = 'g_4_during_the_2025_school_year_what_was_the_main_reason_child_did_not_access_formal_school'
-selected_severity_4_barriers = ["1. Cannot afford the direct costs of education (e.g. tuition, supplies, transportation)"
-,"2. There is a lack of interest for formal education"
-,"3. Education is not a priority either for the child or the household"
-,"4. Lack of appropriate and accessible school"
-,"5. The child is too young"]
-selected_severity_5_barriers = ["10. Curriculum and/or the certificates issued by school are not perceived to be useful for the household"
-,"14. Pregnancy"
-,"11. Protection risks whilst at the school"
-,"12. Marriage, engagement","13. The child's disability or health issues prevents them from accessing school"
-]
-
-natural_hazard_var_sev =None
-additional_last_var = 'no_indicator'
-additional_last_sev= None
-additional_2_last_var='no_indicator'
-additional_2_last_sev = None
-#"---> None of the listed barriers <---"
-#"Child is associated with armed forces or armed groups "
-age_var = 'b_8_1_years'
-gender_var = 'b_8_3_sex_of_household_member'
-start_school = 'October'
-country= 'South Sudan -- SSD'
-
-#admin_var = 'Admin_3: Townships'#'Admin_2: Regions'
- 
-# 'Admin_3: Townships'
-admin_var = 'Admin_2: Cercles' 
-
-vector_cycle = [11,0]
+# unpack to the names used in the rest of the script
+country, selected_language, label = cfg["country"], cfg["selected_language"], cfg["label"]
+start_school, admin_var, vector_cycle = cfg["start_school"], cfg["admin_var"], cfg["vector_cycle"]
+hybrid_country, mismatch_admin, no_ocha_data = cfg["hybrid_country"], cfg["mismatch_admin"], cfg["no_ocha_data"]
+status_var, access_var = cfg["status_var"], cfg["access_var"]
+teacher_disruption_var, idp_disruption_var = cfg["teacher_disruption_var"], cfg["idp_disruption_var"]
+armed_disruption_var, natural_hazard_var = cfg["armed_disruption_var"], cfg["natural_hazard_var"]
+natural_hazard_var_sev = cfg["natural_hazard_var_sev"]
+additional_last_var, additional_last_sev = cfg["additional_last_var"], cfg["additional_last_sev"]
+additional_2_last_var, additional_2_last_sev = cfg["additional_2_last_var"], cfg["additional_2_last_sev"]
+barrier_var, age_var, gender_var = cfg["barrier_var"], cfg["age_var"], cfg["gender_var"]
+selected_severity_4_barriers = cfg["selected_severity_4_barriers"]
+selected_severity_5_barriers = cfg["selected_severity_5_barriers"]
 single_cycle = (vector_cycle[1] == 0)
-primary_start = 7
-secondary_end = 17
-label = 'label'
+# TODO: add later — primary_start, secondary_end, step_2_hpc are commented out in run_config.py (not used yet)
+# primary_start, secondary_end = cfg["primary_start"], cfg["secondary_end"]
+# step_2_hpc = cfg["step_2_hpc"]
+host_value, idp_value, returnee_value = cfg["host_value"], cfg["idp_value"], cfg["returnee_value"]
+refugee_value, other_value = cfg["refugee_value"], cfg["other_value"]
+if all(v is None for v in (host_value, idp_value, returnee_value, refugee_value, other_value)):
+    raise ValueError("Fill in the population-group mapping (host_value, idp_value, ...) in run_config.py")
+sheets = cfg["sheets"]
+country_code = country.split("--")[-1].strip()
+out_dir = os.path.join(cfg["output_dir"], country_code)
+os.makedirs(out_dir, exist_ok=True)
 
-# Path to your Excel file
-excel_path = 'input/ISNA.xlsx'
-excel_path_ocha = 'input/ocha_SSD_2025.xlsx'
-#excel_path_ocha = 'input/test_ocha.xlsx'
-
-# Load the Excel file
-xls = pd.ExcelFile(excel_path, engine='openpyxl')
-# Print all sheet names (optional)
+# --- load data
+xls = pd.ExcelFile(cfg["excel_path"], engine='openpyxl')
 print(xls.sheet_names)
-# Dictionary to hold your dataframes
-dfs = {}
-# Read each sheet into a dataframe
-for sheet_name in xls.sheet_names:
-    dfs[sheet_name] = pd.read_excel(xls, sheet_name=sheet_name)
+dfs = {sheet_name: pd.read_excel(xls, sheet_name=sheet_name) for sheet_name in xls.sheet_names}
+household_data = dfs[sheets["household"]]
+edu_data = dfs[sheets["edu"]]
+survey_data = dfs[sheets["survey"]]
+choice_data = dfs[sheets["choices"]]
 
-# Access specific dataframes
-household_data = dfs['Cleaned household data']
-edu_data = dfs['indv_data']
-survey_data = dfs['Questionnaire']
-choice_data = dfs['Choices']
-
-ocha_xls = pd.ExcelFile(excel_path_ocha, engine='openpyxl')
-
-
-# Read specific sheets into separate dataframes
-ocha_data = pd.read_excel(ocha_xls, sheet_name='ocha')  # 'ocha' sheet
-mismatch_ocha_data = pd.read_excel(ocha_xls, sheet_name='scope-fix')  # 'scope-fix' sheet
-mismatch_admin = False
-
-no_ocha_data = False
-
-selected_language = "English"
+ocha_xls = pd.ExcelFile(cfg["excel_path_ocha"], engine='openpyxl')
+ocha_data = pd.read_excel(ocha_xls, sheet_name=sheets["ocha"]) if sheets["ocha"] else None  # None = no OCHA sheet (e.g. LMR_2022)
+mismatch_ocha_data = pd.read_excel(ocha_xls, sheet_name=sheets["scope_fix"])
 
 
 
@@ -144,14 +105,14 @@ status_var =  "pop_status_group"
 age_var = "ind_age"
 gender_var =  "ind_gender"
 barrier_var = "edu_barrier_final"
-file_path000 = 'output_validation/000_edu_data.xlsx'
-file_path000h = 'output_validation/000_hh.xlsx'
+file_path000 = os.path.join(out_dir, '000_edu_data.xlsx')
+file_path000h = os.path.join(out_dir, '000_hh.xlsx')
 
 # Save the DataFrame to an Excel file
 edu_data1.to_excel(file_path000, index=False, engine='openpyxl')
 household_data.to_excel(file_path000h, index=False, engine='openpyxl')
 
-edu_data_severity = add_severity (country, edu_data1, household_data, choice_data, survey_data,
+edu_data_severity, drop_msg = add_severity (country, edu_data1, household_data, choice_data, survey_data,
                                                                                 access_var, teacher_disruption_var, idp_disruption_var, armed_disruption_var,
                                                                                 natural_hazard_var,natural_hazard_var_sev,
                                                                                     additional_last_var,additional_last_sev,
@@ -162,9 +123,10 @@ edu_data_severity = add_severity (country, edu_data1, household_data, choice_dat
                                                                                 admin_var, vector_cycle, start_school, status_var,
                                                                                 selected_language= selected_language)
 
+if drop_msg:
+    print(drop_msg)
 
-
-file_path = 'output_validation/00_edu_data_with_severity.xlsx'
+file_path = os.path.join(out_dir, '00_edu_data_with_severity.xlsx')
 # Save the DataFrame to an Excel file
 edu_data_severity.to_excel(file_path, index=False, engine='openpyxl')
 
@@ -182,8 +144,9 @@ if ocha_data is not None:
                                                                                     age_var, gender_var,
                                                                                     label, 
                                                                                     admin_var, vector_cycle, start_school, status_var,
+                                                                                    host_value, idp_value, returnee_value, refugee_value, other_value,
                                                                                     mismatch_admin,
-                                                                                    selected_language= selected_language, hybrid_country=False)
+                                                                                    selected_language= selected_language, hybrid_country=hybrid_country)
 
 
 
@@ -204,7 +167,8 @@ if ocha_data is not None:
             admin_var,
             ocha=True,
             tot_severity=Tot_PiN_by_admin,
-            selected_language=selected_language 
+            selected_language=selected_language,
+            ocha_data=ocha_data
         )
     else:
         ocha_excel = create_output(
@@ -216,7 +180,8 @@ if ocha_data is not None:
             admin_var,
             ocha=True,
             tot_severity=Tot_PiN_by_admin,
-            selected_language=selected_language 
+            selected_language=selected_language,
+            ocha_data=ocha_data
         )
 
     print("after create_output")
@@ -245,43 +210,43 @@ if ocha_data is not None:
 
         # Now write each out to disk (or do whatever you want with the in‐memory PNGs)
     for layer, buf in maps.items():
-        fname = f"output_validation/{layer.replace(' ', '_')}.png"
+        fname = os.path.join(out_dir, f"{layer.replace(' ', '_')}.png")
         with open(fname, "wb") as f:
             f.write(buf.getvalue())
 
 
     ##   ***********************************    save for intermediate check:
-    file_path_pin_test1 = 'output_validation/01_pin_sev4.xlsx'
-    file_path_pin_test2 = 'output_validation/01_pin_barrier.xlsx'
+    file_path_pin_test1 = os.path.join(out_dir, '01_pin_sev4.xlsx')
+    file_path_pin_test2 = os.path.join(out_dir, '01_pin_barrier.xlsx')
 
 
 
-    file_path_pin_1 = 'output_validation/01_pin_percentage.xlsx'
-    file_path_dimension_1 = 'output_validation/01_dimension_percentage.xlsx'
-    file_path_pin_female_1 = 'output_validation/0a_pin_female_percentage.xlsx'
-    file_path_pin_male_1 = 'output_validation/0a_pin_male_percentage.xlsx'
-    file_path_factor = 'output_validation/02_factor_strata.xlsx'
-    file_path_pin_2 = 'output_validation/03_pin_percentage_total_OCHA.xlsx'
-    file_path_pin_female_2a = 'output_validation/0b_female_pin_percentage_total_OCHA.xlsx'
-    file_path_pin_male_2a = 'output_validation/0b_male_pin_percentage_total_OCHA.xlsx'
-    file_path_dimension_2 = 'output_validation/03_dimension_percentage_total_OCHA.xlsx'
-    file_path_indicator_2 = 'output_validation/03_indicator_percentage_total_OCHA.xlsx'
+    file_path_pin_1 = os.path.join(out_dir, '01_pin_percentage.xlsx')
+    file_path_dimension_1 = os.path.join(out_dir, '01_dimension_percentage.xlsx')
+    file_path_pin_female_1 = os.path.join(out_dir, '0a_pin_female_percentage.xlsx')
+    file_path_pin_male_1 = os.path.join(out_dir, '0a_pin_male_percentage.xlsx')
+    file_path_factor = os.path.join(out_dir, '02_factor_strata.xlsx')
+    file_path_pin_2 = os.path.join(out_dir, '03_pin_percentage_total_OCHA.xlsx')
+    file_path_pin_female_2a = os.path.join(out_dir, '0b_female_pin_percentage_total_OCHA.xlsx')
+    file_path_pin_male_2a = os.path.join(out_dir, '0b_male_pin_percentage_total_OCHA.xlsx')
+    file_path_dimension_2 = os.path.join(out_dir, '03_dimension_percentage_total_OCHA.xlsx')
+    file_path_indicator_2 = os.path.join(out_dir, '03_indicator_percentage_total_OCHA.xlsx')
 
-    file_path_factor_girl3= 'output_validation/04_pin_factor_girl.xlsx'
-    file_path_factor_boy3= 'output_validation/04_pin_factor_boy.xlsx'
-    file_path_factor_ece3= 'output_validation/04_pin_factor_ECE.xlsx'
-    file_path_factor_primary3= 'output_validation/04_pin_factor_primary.xlsx'
-    file_path_factor_uprimary3= 'output_validation/04_pin_factor_upperprimary.xlsx'
-    file_path_factor_secondary3= 'output_validation/04_pin_factor_secondary.xlsx'
+    file_path_factor_girl3= os.path.join(out_dir, '04_pin_factor_girl.xlsx')
+    file_path_factor_boy3= os.path.join(out_dir, '04_pin_factor_boy.xlsx')
+    file_path_factor_ece3= os.path.join(out_dir, '04_pin_factor_ECE.xlsx')
+    file_path_factor_primary3= os.path.join(out_dir, '04_pin_factor_primary.xlsx')
+    file_path_factor_uprimary3= os.path.join(out_dir, '04_pin_factor_upperprimary.xlsx')
+    file_path_factor_secondary3= os.path.join(out_dir, '04_pin_factor_secondary.xlsx')
 
-    file_path_overview= 'output_validation/05_pin_overview.xlsx'
-    file_path_overview_OCHA= 'output_validation/05_pin_overview_OCHA.xlsx'
+    file_path_overview= os.path.join(out_dir, '05_pin_overview.xlsx')
+    file_path_overview_OCHA= os.path.join(out_dir, '05_pin_overview_OCHA.xlsx')
 
-    file_path_dimension_overview= 'output_validation/05_dimension_overview.xlsx'
-    file_path_dimension_overview_in_need= 'output_validation/05_dimension_overview_in_need.xlsx'
+    file_path_dimension_overview= os.path.join(out_dir, '05_dimension_overview.xlsx')
+    file_path_dimension_overview_in_need= os.path.join(out_dir, '05_dimension_overview_in_need.xlsx')
 
 
-    file_path_pin_tot_by_admin = 'output_validation/06_pin_tot_by_admin_area_severity.xlsx'
+    file_path_pin_tot_by_admin = os.path.join(out_dir, '06_pin_tot_by_admin_area_severity.xlsx')
 
 
     # Create an Excel writer object
@@ -404,27 +369,27 @@ if ocha_data is not None:
     print('before saving')
 
     # Save ocha_excel
-    with open("output_validation/final__OCHA__platform_output.xlsx", "wb") as f:
+    with open(os.path.join(out_dir, "final__OCHA__platform_output.xlsx"), "wb") as f:
         f.write(ocha_excel.getbuffer())
 
 
-    indicator_output = create_indicator_output(country_label, indicator_per_admin_status, admin_var=admin_var)
+    indicator_output = create_indicator_output(country_label, indicator_per_admin_status, admin_var=admin_var, ocha_data=ocha_data)
     print("after create_indicator_output")
-    with open("output_validation/final__indicator__platform_output.xlsx", "wb") as f:
+    with open(os.path.join(out_dir, "final__indicator__platform_output.xlsx"), "wb") as f:
         f.write(indicator_output.getbuffer())    
 
     # Save dimension_jiaf_excel
-    #with open("output_validation/final__dimension_JIAF__platform_output.xlsx", "wb") as f:
+    #with open(os.path.join(out_dir, "final__dimension_JIAF__platform_output.xlsx"), "wb") as f:
         #f.write(dimension_jiaf_excel.getbuffer())
 
     # Save dimension_ocha_excel
-    #with open("output_validation/final__dimension_OCHA__platform_output.xlsx", "wb") as f:
+    #with open(os.path.join(out_dir, "final__dimension_OCHA__platform_output.xlsx"), "wb") as f:
         #f.write(dimension_ocha_excel.getbuffer())
 
 
 
     # Save the Word document to a file
-    file_path = "output_validation/pin_snapshot_with_charts_and_text2.docx"
+    file_path = os.path.join(out_dir, "pin_snapshot_with_charts_and_text2.docx")
     with open(file_path, "wb") as f:
         f.write(doc_output.getvalue())
 
@@ -439,6 +404,7 @@ if no_ocha_data:
                                                                                     age_var, gender_var,
                                                                                     label, 
                                                                                     admin_var, vector_cycle, start_school, status_var,
+                                                                                    host_value, idp_value, returnee_value, refugee_value, other_value,
                                                                                     mismatch_admin,
                                                                                     selected_language= selected_language)
     
@@ -446,14 +412,14 @@ if no_ocha_data:
     pin_percentage_output    =     create_pin_raw_output(country_label, severity_admin_status_list, admin_var=admin_var, selected_language=selected_language)
 
 
-    with open("output_validation/no_ocha__indicator__platform_output.xlsx", "wb") as f:
+    with open(os.path.join(out_dir, "no_ocha__indicator__platform_output.xlsx"), "wb") as f:
         f.write(indicator_output.getbuffer())   
-    with open("output_validation/no_ocha__pin_percentage__platform_output.xlsx", "wb") as f:
+    with open(os.path.join(out_dir, "no_ocha__pin_percentage__platform_output.xlsx"), "wb") as f:
         f.write(pin_percentage_output.getbuffer())      
      
-    file_path_pin_no_ocha = 'output_validation/no_ocha_pin_percentage.xlsx'
-    file_path_no_ocha_dimension = 'output_validation/no_ocha_dimension_percentage.xlsx'
-    file_path_no_ocha_pin_by_indicator = 'output_validation/no_ocha_pin_by_indicator.xlsx'
+    file_path_pin_no_ocha = os.path.join(out_dir, 'no_ocha_pin_percentage.xlsx')
+    file_path_no_ocha_dimension = os.path.join(out_dir, 'no_ocha_dimension_percentage.xlsx')
+    file_path_no_ocha_pin_by_indicator = os.path.join(out_dir, 'no_ocha_pin_by_indicator.xlsx')
 
     with pd.ExcelWriter(file_path_pin_no_ocha) as writer:
         # Iterate over each category and DataFrame in the dictionary
