@@ -441,12 +441,12 @@ if ocha_data is not None and not step_2_hpc and not alternative_country and not 
 
     # ------------------------ A. create excel PiN classic file
     if selected_language == "French":
-        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language,parameters=parameters_FR  )
+        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language,parameters=parameters_FR, ocha_data=ocha_data)
     else:
-        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language,parameters=parameters  )
+        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language,parameters=parameters, ocha_data=ocha_data)
 
     # ------------------------ B. create excel PiN by indicator file
-    indicator_output = create_indicator_output(country_label, indicator_per_admin_status, admin_var=admin_var)
+    indicator_output = create_indicator_output(country_label, indicator_per_admin_status, admin_var=admin_var, ocha_data=ocha_data)
 
     # ------------------------ C. create word PiN snapshot
     if selected_language == "English":
@@ -566,7 +566,7 @@ if ocha_data is not None and not step_2_hpc and not alternative_country and hybr
         doc_output = create_snapshot_PiN_FR(country_label, final_overview_df, final_overview_df_OCHA,final_overview_dimension_df, final_overview_dimension_df_in_need,selected_language=selected_language,step1=True)
 
     # ------------------------ B. create excel PiN by indicator file
-    indicator_output = create_indicator_output(country_label, indicator_per_admin_status, admin_var=admin_var)
+    indicator_output = create_indicator_output(country_label, indicator_per_admin_status, admin_var=admin_var, ocha_data=ocha_data)
 
     maps_1step = make_map_severity(country, pin_data=Tot_PiN_by_admin,hpc_df=ocha_data)
 
@@ -711,9 +711,9 @@ if step_2_hpc and hybrid_country:
 
     # ------------------------ A. create excel PiN classic file
     if selected_language == "French":
-        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language  )
+        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language, ocha_data=ocha_data)
     else:
-        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language )
+        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language, ocha_data=ocha_data)
 
     if selected_language == "English":
         doc_output = create_snapshot_PiN(country_label, final_overview_df, final_overview_df_OCHA, selected_language=selected_language)
@@ -858,9 +858,9 @@ if jena_country and ocha_data is not None:
 
     # ------------------------ A. create excel PiN classic file
     if selected_language == "French":
-        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language  )
+        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language, ocha_data=ocha_data)
     else:
-        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language )
+        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language, ocha_data=ocha_data)
 
 
     #st.dataframe(final_overview_df)
@@ -1005,9 +1005,9 @@ if emis_country and ocha_data is not None:
 
     # ------------------------ A. create excel PiN classic file
     if selected_language == "French":
-        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language  )
+        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language, ocha_data=ocha_data)
     else:
-        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language )
+        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language, ocha_data=ocha_data)
 
 
     #st.dataframe(final_overview_df)

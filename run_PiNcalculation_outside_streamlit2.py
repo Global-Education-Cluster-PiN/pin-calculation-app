@@ -212,9 +212,10 @@ else:
 outputs = {
     f"PiN_results_{country_label}.xlsx": create_output(
         country_label, Tot_PiN_JIAF, final_overview_df, final_overview_df_OCHA, "PiN TOTAL",
-        admin_var, ocha=True, tot_severity=Tot_PiN_by_admin, selected_language=selected_language),
+        admin_var, ocha=True, tot_severity=Tot_PiN_by_admin, selected_language=selected_language,
+        ocha_data=ocha_data),
     f"PiN_by_indicator_{country_label}.xlsx": create_indicator_output(
-        country_label, indicator_per_admin_status, admin_var=admin_var),
+        country_label, indicator_per_admin_status, admin_var=admin_var, ocha_data=ocha_data),
     f"PiN_snapshot_{country_label}.docx": snapshot,
 }
 for layer, buf in make_map_severity(country, pin_data=Tot_PiN_by_admin, hpc_df=ocha_data).items():
