@@ -18,8 +18,9 @@ import matplotlib as mpl
 
 
 
-# Set the global font to Calibri
-mpl.rcParams['font.family'] = 'Calibri'
+# Set the global font to Calibri when available (Carlito is its open metric-compatible twin), else DejaVu Sans
+mpl.rcParams['font.family'] = 'sans-serif'
+mpl.rcParams['font.sans-serif'] = ['Calibri', 'Carlito', 'DejaVu Sans']
 mpl.rcParams['font.size'] = 12  # Set default font size if needed
 
 
