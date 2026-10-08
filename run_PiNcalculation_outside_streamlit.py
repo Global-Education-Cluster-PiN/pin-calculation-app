@@ -30,15 +30,6 @@ import matplotlib.pyplot as plt
 from docx.shared import Inches
 import os, glob
 
-
-
-
-################################################
-##           input from thee user             ##
-################################################
-
-
-
 from run_config import CASES, ACTIVE_CASE
 
 cfg = CASES[ACTIVE_CASE]
@@ -84,22 +75,23 @@ mismatch_ocha_data = pd.read_excel(ocha_xls, sheet_name=sheets["scope_fix"])
 
 
 
-##################################################################################################################################################################################################################
-##################################################################################################################################################################################################################
-#############################################################################        CALCULATION PIN              ################################################################################################
-##################################################################################################################################################################################################################
-##################################################################################################################################################################################################################
-##################################################################################################################################################################################################################
-edu_data1, household_data, survey_data, choice_data, messages = clean_make_dataset (country, edu_data, household_data, choice_data, survey_data, 
-                                                                                access_var, teacher_disruption_var, idp_disruption_var, armed_disruption_var,
-                                                                                natural_hazard_var,natural_hazard_var_sev,
-                                                                                additional_last_var,additional_last_sev,
-                                                                                additional_2_last_var,additional_2_last_sev,
-                                                                                barrier_var, selected_severity_4_barriers, selected_severity_5_barriers,
-                                                                                age_var, gender_var,
-                                                                                label, 
-                                                                                admin_var, vector_cycle, start_school, status_var,
-                                                                                selected_language)
+#######################################################
+#######################################################
+##########          CALCULATION PIN          ##########
+#######################################################
+#######################################################
+#######################################################
+edu_data1, household_data, survey_data, choice_data, messages = clean_make_dataset (
+    country, edu_data, household_data, choice_data, survey_data, 
+    access_var, teacher_disruption_var, idp_disruption_var, armed_disruption_var,
+    natural_hazard_var,natural_hazard_var_sev,
+    additional_last_var,additional_last_sev,
+    additional_2_last_var,additional_2_last_sev,
+    barrier_var, selected_severity_4_barriers, selected_severity_5_barriers,
+    age_var, gender_var,
+    label, 
+    admin_var, vector_cycle, start_school, status_var,
+    selected_language)
 
 status_var =  "pop_status_group"
 age_var = "ind_age"
@@ -112,16 +104,21 @@ file_path000h = os.path.join(out_dir, '000_hh.xlsx')
 edu_data1.to_excel(file_path000, index=False, engine='openpyxl')
 household_data.to_excel(file_path000h, index=False, engine='openpyxl')
 
-edu_data_severity, drop_msg = add_severity (country, edu_data1, household_data, choice_data, survey_data,
-                                                                                access_var, teacher_disruption_var, idp_disruption_var, armed_disruption_var,
-                                                                                natural_hazard_var,natural_hazard_var_sev,
-                                                                                    additional_last_var,additional_last_sev,
-                                                                                    additional_2_last_var,additional_2_last_sev,
-                                                                                barrier_var, selected_severity_4_barriers, selected_severity_5_barriers,
-                                                                                age_var, gender_var,
-                                                                                label, 
-                                                                                admin_var, vector_cycle, start_school, status_var,
-                                                                                selected_language= selected_language)
+edu_data_severity, drop_msg = add_severity (
+    country,
+    edu_data1,
+    household_data,
+    choice_data,
+    survey_data,
+    access_var, teacher_disruption_var, idp_disruption_var, armed_disruption_var,
+    natural_hazard_var,natural_hazard_var_sev,
+    additional_last_var,additional_last_sev,
+    additional_2_last_var,additional_2_last_sev,
+    barrier_var, selected_severity_4_barriers, selected_severity_5_barriers,
+    age_var, gender_var,
+    label, 
+    admin_var, vector_cycle, start_school, status_var,
+    selected_language= selected_language)
 
 if drop_msg:
     print(drop_msg)
@@ -399,14 +396,14 @@ if no_ocha_data:
     (severity_admin_status_list, dimension_admin_status_list,
     indicator_per_admin_status,
     country_label) = calculatePIN_NO_OCHA_2025 (country, edu_data_severity, household_data, choice_data, survey_data,mismatch_ocha_data,
-                                                                                    access_var, teacher_disruption_var, idp_disruption_var, armed_disruption_var,natural_hazard_var,
-                                                                                    barrier_var, selected_severity_4_barriers, selected_severity_5_barriers,
-                                                                                    age_var, gender_var,
-                                                                                    label, 
-                                                                                    admin_var, vector_cycle, start_school, status_var,
-                                                                                    host_value, idp_value, returnee_value, refugee_value, other_value,
-                                                                                    mismatch_admin,
-                                                                                    selected_language= selected_language)
+        access_var, teacher_disruption_var, idp_disruption_var, armed_disruption_var,natural_hazard_var,
+        barrier_var, selected_severity_4_barriers, selected_severity_5_barriers,
+        age_var, gender_var,
+        label, 
+        admin_var, vector_cycle, start_school, status_var,
+        host_value, idp_value, returnee_value, refugee_value, other_value,
+        mismatch_admin,
+        selected_language= selected_language)
     
     indicator_output = create_indicator_output_no_ocha(country_label, indicator_per_admin_status, admin_var=admin_var, selected_language=selected_language)
     pin_percentage_output    =     create_pin_raw_output(country_label, severity_admin_status_list, admin_var=admin_var, selected_language=selected_language)

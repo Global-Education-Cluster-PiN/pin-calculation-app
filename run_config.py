@@ -1,7 +1,7 @@
 # Settings for run_PiNcalculation_outside_streamlit*.py
 # Pick the case to run with ACTIVE_CASE; add new countries/years as new keyed entries.
 
-ACTIVE_CASE = "SSD_2025"
+ACTIVE_CASE = "SOM_2026"
 
 CASES = {
     "SOM_2026": {
@@ -16,7 +16,7 @@ CASES = {
         # "primary_start": 7,
         # "secondary_end": 17,
         # "step_2_hpc": False,
-        "hybrid_country": False,           # True = hybrid country: French labels are not translated in calculatePIN
+        "hybrid_country": True,           # True = hybrid country: French labels are not translated in calculatePIN
         "mismatch_admin": False,
         "no_ocha_data": False,
 
