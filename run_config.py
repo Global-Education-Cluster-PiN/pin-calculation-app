@@ -1,9 +1,148 @@
 # Settings for run_PiNcalculation_outside_streamlit*.py
 # Pick the case to run with ACTIVE_CASE; add new countries/years as new keyed entries.
 
-ACTIVE_CASE = "SOM_2026"
+ACTIVE_CASE = "AFG_2026"
 
 CASES = {
+    "AFG_2026": {
+        
+        # --- general
+        "country": 'Afghanistan -- AFG',
+        "selected_language": 'English',
+        "label": 'label::English',
+        "start_school": 'November',
+        "admin_var": 'Admin_2: Province',
+        "vector_cycle": [14, 16],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 7,
+        # "secondary_end": 17,
+        "hybrid_country": False,  # not set in original: default
+        "mismatch_admin": False,
+        "no_ocha_data": False,  # not set in original: default
+
+        # --- input files
+        "excel_data_path": 'input/AFG/00_Datasets/AFG_MSNA_edu_data.xlsx',
+        "excel_path_ocha": 'input/AFG/10_PiN supporting files/AFG_Population_figures_filled_v2.xlsx',
+        "sheets": {
+            "household": 'hh_main_data',
+            "edu": 'edu_clean_data',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        # TODO: fill in before running (the script stops if all five are None)
+        "host_value": 'general_pop',
+        "idp_value": 'idp',
+        "returnee_value": 'cb_returnee',
+        "refugee_value": None,
+        "other_value": None,
+
+        # --- MSNA variables
+        "status_var": "pop_group",
+        "age_var": "edu_ind_age",
+        "gender_var": "edu_ind_gender",
+        "access_var": "edu_access",
+        "teacher_disruption_var": "edu_disrupted_teachers",
+        "idp_disruption_var": "edu_disrupted_displaced",
+        "natural_hazard_var": "no_indicator",
+        "natural_hazard_var_sev": None,
+        "armed_disruption_var": 'edu_disrupted_man_made',
+        "additional_last_var": "no_indicator",
+        "additional_last_sev": None,
+        "additional_2_last_var": "no_indicator",
+        "additional_2_last_sev": None,
+        "barrier_var": "edu_barrier",
+
+        # --- barrier severity
+        "selected_severity_4_barriers": ['Protection risks whilst at the school',
+                    'Protection risks whilst travelling to the school',
+                    "Child needs to work at home or on the household's own farm, i.e. is not earning an income for these activities, but may allow other family members to earn an income",
+                    'Child participating in income generating activities outside of the home',
+                    'Marriage or engagement'],
+
+        "selected_severity_5_barriers": ['There is a ban preventing child from attending',
+                    'Child is associated with armed forces or armed groups',
+                    'Pregnancy'],
+    },
+
+    "VaSYR_2026": {
+        # --- general
+        "country": "Lebanon -- LBN",
+        "selected_language": "English",
+        "label": "label::English",
+        "start_school": "September",
+        "admin_var": "Admin_2: Districts (qaḍya)",   
+        "vector_cycle": [11, 14],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 7,
+        # "secondary_end": 17,
+        # "step_2_hpc": False,
+        "hybrid_country": False,           # True = hybrid country: French labels are not translated in calculatePIN
+        "mismatch_admin": False,
+        "no_ocha_data": False,
+
+        # --- input files
+        "excel_data_path": "input/LBN/LBN_VaSYR_edu_data.xlsx",
+        "excel_path_ocha": "input/LBN/LBN_SYR_pop.xlsx",
+        
+        "sheets": {
+            "household": "main",
+            "edu": "edu_ind",
+            "survey": "survey",
+            "choices": "choices",
+            "ocha": "ocha",
+            "scope_fix": "scope-fix",
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        "host_value": "vasyr",
+        "idp_value": None,
+        "returnee_value": None,
+        "refugee_value": None,
+        "other_value": None,
+
+        # --- MSNA variables
+        "status_var": "pop_group",
+        "age_var": "ind_age",
+        "gender_var": "ind_gender",
+        "access_var": "edu_access",
+        "teacher_disruption_var": "edu_disrupted_teachers",
+        "idp_disruption_var": "edu_disrupted_displaced",
+        "natural_hazard_var": "edu_disrupted_hazards",
+        "natural_hazard_var_sev": 4,
+        "armed_disruption_var": 'edu_disrupted_man_made',
+        "additional_last_var": "no_indicator",
+        "additional_last_sev": None,
+        "additional_2_last_var": "no_indicator",
+        "additional_2_last_sev": None,
+        "barrier_var": "edu_barrier",
+
+        # --- barrier severity
+        "selected_severity_4_barriers": [
+            "h. Not attending due to marriage",
+            "i. Not attending due to work",
+            "m. School closed due to emergency/conflict",
+            "n. School damaged or unsafe due to emergency/conflict",
+            "o. School being used as a shelter for displaced households",
+            "r. Safety concerns on the way to school due to emergency/conflict",
+            "s. Safety concerns for girls, including lack of safe transport, unsafe routes, or fear of harassment",
+            "u. Children need to stay at home to take care of the home and/or siblings",
+            "u. Children need to stay at home to take care of the home and/or siblings",
+            "v. Not attending due to fear of violence in school from school personnel",
+            "v. Not attending due to fear of violence in school from school personnel",
+            "w. Not attending due to fear of violence in school from other children",
+            "x. Fear of violence on the way to school",
+        ],
+        "selected_severity_5_barriers": [
+            "w. Lack of documentation",
+        ],
+        
+    },
     "SOM_2026": {
         # --- general
         "country": "Somalia -- SOM",
@@ -21,7 +160,7 @@ CASES = {
         "no_ocha_data": False,
 
         # --- input files
-        "excel_path": "input/SOM/SOM_MSNA_ALL_edu_data.xlsx",
+        "excel_data_path": "input/SOM/SOM_MSNA_ALL_edu_data.xlsx",
         "excel_path_ocha": "input/SOM/SOM_Population_figures_filled.xlsx",
         
         "sheets": {
@@ -96,7 +235,7 @@ CASES = {
         "no_ocha_data": False,
 
         # --- input files
-        "excel_path": "input/ISNA.xlsx",
+        "excel_data_path": "input/ISNA.xlsx",
         "excel_path_ocha": "input/ocha_SSD_2025.xlsx",
         
         "sheets": {
@@ -169,7 +308,7 @@ CASES = {
         "no_ocha_data": True,
 
         # --- input files
-        "excel_path": 'input/Lemuria_MSNA_2022.xlsx',
+        "excel_data_path": 'input/Lemuria_MSNA_2022.xlsx',
         "excel_path_ocha": 'input/OCHA_pop_LMR.xlsx',
         "sheets": {
             "household": '01_clean_data_main',
@@ -237,7 +376,7 @@ CASES = {
         "no_ocha_data": False,  # not set in original: default
 
         # --- input files
-        "excel_path": 'input/REACH_MMR_MMR2402_MSNA_Dataset_VALIDATED.xlsx',
+        "excel_data_path": 'input/REACH_MMR_MMR2402_MSNA_Dataset_VALIDATED.xlsx',
         "excel_path_ocha": 'input/ocha_pop_MMR.xlsx',
         "sheets": {
             "household": '01_clean_data_main',
@@ -305,7 +444,7 @@ CASES = {
         "no_ocha_data": False,  # not set in original: default
 
         # --- input files
-        "excel_path": 'input/BFA2402_MSNA_2024_DATA_CLEANED_VF.xlsx',
+        "excel_data_path": 'input/BFA2402_MSNA_2024_DATA_CLEANED_VF.xlsx',
         "excel_path_ocha": 'input/ocha_pop_BFA.xlsx',
         "sheets": {
             "household": 'main_cleaned',
@@ -368,7 +507,7 @@ CASES = {
         "no_ocha_data": False,  # not set in original: default
 
         # --- input files
-        "excel_path": 'input/AFG_WoAA_2024_data.xlsx',
+        "excel_data_path": 'input/AFG_WoAA_2024_data.xlsx',
         "excel_path_ocha": 'input/AFG_ocha_admin2.xlsx',
         "sheets": {
             "household": 'AFG_WoAA_2024_data_main_recoded',
@@ -433,7 +572,7 @@ CASES = {
         "no_ocha_data": False,  # not set in original: default
 
         # --- input files
-        "excel_path": 'input/REACH_MSNA_2024_FINAL_Cleaned_Weights.xlsx',
+        "excel_data_path": 'input/REACH_MSNA_2024_FINAL_Cleaned_Weights.xlsx',
         "excel_path_ocha": 'input/ocha.xlsx',
         "sheets": {
             "household": 'main',
@@ -497,7 +636,7 @@ CASES = {
         "no_ocha_data": False,  # not set in original: default
 
         # --- input files
-        "excel_path": 'input/ner_msna_clean_data_FINAL.xlsx',
+        "excel_data_path": 'input/ner_msna_clean_data_FINAL.xlsx',
         "excel_path_ocha": 'input/ocha_NER_update.xlsx',
         "sheets": {
             "household": 'raw_data_clean',
@@ -560,7 +699,7 @@ CASES = {
         "no_ocha_data": False,  # not set in original: default
 
         # --- input files
-        "excel_path": 'input/REACH_DRC2404_MSNA2024_Clean-Data.xlsx',
+        "excel_data_path": 'input/REACH_DRC2404_MSNA2024_Clean-Data.xlsx',
         "excel_path_ocha": 'input/DRC_ocha.xlsx',
         "sheets": {
             "household": 'hh_data',
@@ -624,7 +763,7 @@ CASES = {
         "no_ocha_data": False,
 
         # --- input files
-        "excel_path": 'input/REACH_MSNA_2023_DRC_clean dataset_v2.xlsx',
+        "excel_data_path": 'input/REACH_MSNA_2023_DRC_clean dataset_v2.xlsx',
         "excel_path_ocha": 'input/DRC_ocha_2025.xlsx',
         "sheets": {
             "household": 'BDD nettoyée',
@@ -691,7 +830,7 @@ CASES = {
         "no_ocha_data": False,  # not set in original: default
 
         # --- input files
-        "excel_path": 'input/CAR2402_REACH_MSNA_Base-de-donnees-nettoyees_septembre-2024-1.xlsx',
+        "excel_data_path": 'input/CAR2402_REACH_MSNA_Base-de-donnees-nettoyees_septembre-2024-1.xlsx',
         "excel_path_ocha": 'input/Ocha_pop_CAR.xlsx',
         "sheets": {
             "household": 'menage',
@@ -753,7 +892,7 @@ CASES = {
         "no_ocha_data": False,  # not set in original: default
 
         # --- input files
-        "excel_path": 'input/REACH_MLI2402__Clean-Dataset_final.xlsx',
+        "excel_data_path": 'input/REACH_MLI2402__Clean-Dataset_final.xlsx',
         "excel_path_ocha": 'input/Template_Population_figures_final_1510.xlsx',
         "sheets": {
             "household": 'Ménages',
@@ -816,7 +955,7 @@ CASES = {
         "no_ocha_data": False,  # not set in original: default
 
         # --- input files
-        "excel_path": 'input/CAR2402_REACH_MSNA_Base-de-donnees-nettoyees_septembre-2024-1.xlsx',
+        "excel_data_path": 'input/CAR2402_REACH_MSNA_Base-de-donnees-nettoyees_septembre-2024-1.xlsx',
         "excel_path_ocha": 'input/Ocha_pop_CAR.xlsx',
         "sheets": {
             "household": 'menage',
@@ -884,7 +1023,7 @@ CASES = {
         "no_ocha_data": False,
 
         # --- input files
-        "excel_path": 'input/MSNA Mozambique 2025.xlsx',
+        "excel_data_path": 'input/MSNA Mozambique 2025.xlsx',
         "excel_path_ocha": 'input/ocha_MOZ.xlsx',
         "sheets": {
             "household": 'main',
@@ -950,7 +1089,7 @@ CASES = {
         "no_ocha_data": False,
 
         # --- input files
-        "excel_path": 'input/REACH_MMR_MMR2503_MSNA_Dataset_V2_1.xlsx',
+        "excel_data_path": 'input/REACH_MMR_MMR2503_MSNA_Dataset_V2_1.xlsx',
         "excel_path_ocha": 'input/Template_Population_figures - Final.xlsx',
         "sheets": {
             "household": '01_clean_data_main',
@@ -1019,7 +1158,7 @@ CASES = {
         "no_ocha_data": False,
 
         # --- input files
-        "excel_path": 'input/MSNA_2025_MLI_South_and_North.xlsx',
+        "excel_data_path": 'input/MSNA_2025_MLI_South_and_North.xlsx',
         "excel_path_ocha": 'input/MLI_ocha.xlsx',
         "sheets": {
             "household": 'hh data',
@@ -1085,7 +1224,7 @@ CASES = {
         "no_ocha_data": False,  # not set in original: default
 
         # --- input files
-        "excel_path": 'input/BFA/REACH I BFA I 2025 MSNA-eduPlatform.xlsx',
+        "excel_data_path": 'input/BFA/REACH I BFA I 2025 MSNA-eduPlatform.xlsx',
         "excel_path_ocha": 'input/BFA/BFA_ocha_FINAL__1909.xlsx',
         "sheets": {
             "household": 'main',

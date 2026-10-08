@@ -61,7 +61,7 @@ out_dir = os.path.join(cfg["output_dir"], country_code)
 os.makedirs(out_dir, exist_ok=True)
 
 # --- load data
-xls = pd.ExcelFile(cfg["excel_path"], engine='openpyxl')
+xls = pd.ExcelFile(cfg["excel_data_path"], engine='openpyxl')
 print(xls.sheet_names)
 dfs = {sheet_name: pd.read_excel(xls, sheet_name=sheet_name) for sheet_name in xls.sheet_names}
 household_data = dfs[sheets["household"]]
