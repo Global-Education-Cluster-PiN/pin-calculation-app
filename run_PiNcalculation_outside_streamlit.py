@@ -30,6 +30,9 @@ import matplotlib.pyplot as plt
 from docx.shared import Inches
 import os, glob
 
+import importlib
+import run_config
+importlib.reload(run_config)   # pick up edits to run_config.py when re-running in a notebook
 from run_config import CASES, ACTIVE_CASE
 
 cfg = CASES[ACTIVE_CASE]
@@ -60,18 +63,53 @@ country_code = country.split("--")[-1].strip()
 out_dir = os.path.join(cfg["output_dir"], country_code)
 os.makedirs(out_dir, exist_ok=True)
 
-# --- load data
-xls = pd.ExcelFile(cfg["excel_data_path"], engine='openpyxl')
-print(xls.sheet_names)
-dfs = {sheet_name: pd.read_excel(xls, sheet_name=sheet_name) for sheet_name in xls.sheet_names}
+# --- checkpoints: save the slow steps once they finish and reuse them while their inputs are unchanged
+import hashlib, pickle
+use_cache = cfg.get("use_cache", True)          # set "use_cache": False in run_config.py to force a full rerun
+cache_dir = os.path.join(out_dir, "cache")
+os.makedirs(cache_dir, exist_ok=True)
+
+def file_signature(path):
+    """Path, modification time and size: changes whenever the file is edited."""
+    return (os.path.abspath(path), os.path.getmtime(path), os.path.getsize(path))
+
+def fingerprint(*parts):
+    return hashlib.sha256(repr(parts).encode()).hexdigest()
+
+def load_or_compute(name, key, compute):
+    """Return the saved result of `name` if its key matches, otherwise run compute() and save it."""
+    path = os.path.join(cache_dir, f"{name}.pkl")
+    if use_cache and os.path.exists(path):
+        with open(path, "rb") as f:
+            saved = pickle.load(f)
+        if saved["key"] == key:
+            print(f"loaded {name} from cache")
+            return saved["result"]
+        print(f"{name}: inputs changed, recomputing")
+    result = compute()
+    with open(path + ".tmp", "wb") as f:
+        pickle.dump({"key": key, "result": result}, f)
+    os.replace(path + ".tmp", path)          # only a completed step is saved
+    print(f"saved {name} to cache")
+    return result
+
+# --- load data (checkpoint 01): only the sheets that are used
+def load_inputs():
+    xls = pd.ExcelFile(cfg["excel_data_path"], engine='openpyxl')
+    print(xls.sheet_names)
+    needed = [sheets["household"], sheets["edu"], sheets["survey"], sheets["choices"]]
+    dfs = {sheet_name: pd.read_excel(xls, sheet_name=sheet_name) for sheet_name in needed}
+    ocha_xls = pd.ExcelFile(cfg["excel_path_ocha"], engine='openpyxl')
+    ocha_data = pd.read_excel(ocha_xls, sheet_name=sheets["ocha"]) if sheets["ocha"] else None  # None = no OCHA sheet (e.g. LMR_2022)
+    mismatch_ocha_data = pd.read_excel(ocha_xls, sheet_name=sheets["scope_fix"])
+    return dfs, ocha_data, mismatch_ocha_data
+
+key_loaded = fingerprint(file_signature(cfg["excel_data_path"]), file_signature(cfg["excel_path_ocha"]), sheets)
+dfs, ocha_data, mismatch_ocha_data = load_or_compute("01_loaded", key_loaded, load_inputs)
 household_data = dfs[sheets["household"]]
 edu_data = dfs[sheets["edu"]]
 survey_data = dfs[sheets["survey"]]
 choice_data = dfs[sheets["choices"]]
-
-ocha_xls = pd.ExcelFile(cfg["excel_path_ocha"], engine='openpyxl')
-ocha_data = pd.read_excel(ocha_xls, sheet_name=sheets["ocha"]) if sheets["ocha"] else None  # None = no OCHA sheet (e.g. LMR_2022)
-mismatch_ocha_data = pd.read_excel(ocha_xls, sheet_name=sheets["scope_fix"])
 
 
 
@@ -81,17 +119,26 @@ mismatch_ocha_data = pd.read_excel(ocha_xls, sheet_name=sheets["scope_fix"])
 #######################################################
 #######################################################
 #######################################################
-edu_data1, household_data, survey_data, choice_data, messages = clean_make_dataset (
-    country, edu_data, household_data, choice_data, survey_data, 
+# Always start from the raw sheets and the column names in run_config.py, so this step can be
+# re-run in a notebook even after the standard names below have overwritten status_var, age_var, ...
+def run_cleaning():
+    return clean_make_dataset (
+    country,
+    dfs[sheets["edu"]].copy(), dfs[sheets["household"]].copy(),
+    dfs[sheets["choices"]].copy(), dfs[sheets["survey"]].copy(),
     access_var, teacher_disruption_var, idp_disruption_var, armed_disruption_var,
     natural_hazard_var,natural_hazard_var_sev,
     additional_last_var,additional_last_sev,
     additional_2_last_var,additional_2_last_sev,
-    barrier_var, selected_severity_4_barriers, selected_severity_5_barriers,
-    age_var, gender_var,
-    label, 
-    admin_var, vector_cycle, start_school, status_var,
+    cfg["barrier_var"], selected_severity_4_barriers, selected_severity_5_barriers,
+    cfg["age_var"], cfg["gender_var"],
+    label,
+    admin_var, vector_cycle, start_school, cfg["status_var"],
     selected_language)
+
+config_for_key = {k: v for k, v in cfg.items() if k not in ("use_cache", "output_dir")}
+key_cleaned = fingerprint(key_loaded, config_for_key, file_signature("src/clean_dataset.py"))
+edu_data1, household_data, survey_data, choice_data, messages = load_or_compute("02_cleaned", key_cleaned, run_cleaning)
 
 status_var =  "pop_status_group"
 age_var = "ind_age"
@@ -104,7 +151,8 @@ file_path000h = os.path.join(out_dir, '000_hh.xlsx')
 edu_data1.to_excel(file_path000, index=False, engine='openpyxl')
 household_data.to_excel(file_path000h, index=False, engine='openpyxl')
 
-edu_data_severity, drop_msg = add_severity (
+def run_severity():
+    return add_severity (
     country,
     edu_data1,
     household_data,
@@ -119,6 +167,9 @@ edu_data_severity, drop_msg = add_severity (
     label, 
     admin_var, vector_cycle, start_school, status_var,
     selected_language= selected_language)
+
+key_severity = fingerprint(key_cleaned, file_signature("src/add_PiN_severity.py"))
+edu_data_severity, drop_msg = load_or_compute("03_severity", key_severity, run_severity)
 
 if drop_msg:
     print(drop_msg)
@@ -389,6 +440,8 @@ if ocha_data is not None:
     file_path = os.path.join(out_dir, "pin_snapshot_with_charts_and_text2.docx")
     with open(file_path, "wb") as f:
         f.write(doc_output.getvalue())
+
+
 
 
 
