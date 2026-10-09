@@ -35,6 +35,7 @@ import run_config
 importlib.reload(run_config)   # pick up edits to run_config.py when re-running in a notebook
 from run_config import CASES, ACTIVE_CASE
 
+ACTIVE_CASE = os.environ.get("PIN_CASE") or ACTIVE_CASE   # run_all_cases.py chooses the case through PIN_CASE
 cfg = CASES[ACTIVE_CASE]
 
 # unpack to the names used in the rest of the script
@@ -60,7 +61,7 @@ if all(v is None for v in (host_value, idp_value, returnee_value, refugee_value,
     raise ValueError("Fill in the population-group mapping (host_value, idp_value, ...) in run_config.py")
 sheets = cfg["sheets"]
 country_code = country.split("--")[-1].strip()
-out_dir = os.path.join(cfg["output_dir"], country_code)
+out_dir = os.path.join(cfg["output_dir"], country_code, ACTIVE_CASE)   # one folder per case, so variants don't overwrite each other
 os.makedirs(out_dir, exist_ok=True)
 
 # --- checkpoints: save the slow steps once they finish and reuse them while their inputs are unchanged
