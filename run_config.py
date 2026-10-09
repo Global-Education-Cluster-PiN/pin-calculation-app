@@ -11,6 +11,7 @@ CASES = {
         
         # --- general
         "country": 'Afghanistan -- AFG',
+        "full_GEC_compliant": True,  # True: same as the platform (girls >12 out of school: barrier set to "ban" and severity 5); False: skip this AFG rule and apply the standard rules
         "selected_language": 'English',
         "label": 'label::English',
         "start_school": 'November',
@@ -75,6 +76,7 @@ CASES = {
         
         # --- general
         "country": 'Afghanistan -- AFG',
+        "full_GEC_compliant": True,  # True: same as the platform (girls >12 out of school: barrier set to "ban" and severity 5); False: skip this AFG rule and apply the standard rules
         "selected_language": 'English',
         "label": 'label::English',
         "start_school": 'November',
@@ -562,6 +564,7 @@ CASES = {
         # from cases_coutry_helpers.py lines 210-275 ("## AFG")
         # --- general
         "country": 'Afghanistan -- AFG',
+        "full_GEC_compliant": True,  # True: same as the platform (girls >12 out of school: barrier set to "ban" and severity 5); False: skip this AFG rule and apply the standard rules
         "selected_language": 'English',
         "label": 'label::English',
         "start_school": 'November',

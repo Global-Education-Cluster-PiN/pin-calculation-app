@@ -93,7 +93,7 @@ def calculate_severity(country, gender, age, access, barrier,
                        armed_disruption, natural_hazard, additional_ind,additional_2_ind,
                        natural_hazard_severity, additional_ind_severity,additional_2_ind_severity,
                        idp_disruption, teacher_disruption,
-                       names_severity_4, names_severity_5):
+                       names_severity_4, names_severity_5, full_GEC_compliant=True):
 
     # Helper function to safely normalize string inputs
     def normalize(input_value):
@@ -119,7 +119,8 @@ def calculate_severity(country, gender, age, access, barrier,
     yes_answers = ['yes', 'oui', 1, '1', '1. yes', '1. Yes']  # keep lenient
     no_answers  = ['no', 'non', 0, '0', '2. no', '2. No']
 
-    if country != 'Afghanistan -- AFG':
+    # full_GEC_compliant=False: Afghanistan also follows the standard rules (no girls >12 rule)
+    if country != 'Afghanistan -- AFG' or not full_GEC_compliant:
         # Main severity calculation logic
         if normalized_access in no_answers:
             if barrier in names_severity_5:
@@ -563,7 +564,8 @@ def add_severity(country,
                 vector_cycle,
                 start_school,
                 status_var,
-                selected_language):
+                selected_language,
+                full_GEC_compliant=True):
 
     admin_target = admin_var
     pop_group_var = status_var
@@ -652,7 +654,8 @@ def add_severity(country,
     else:
         edu_data = edu_data[(edu_data['edu_age_corrected'] >= 6) & (edu_data['edu_age_corrected'] <= 17)]
 
-    if country == "Afghanistan -- AFG":
+    # full_GEC_compliant=False: girls keep their reported barrier
+    if country == "Afghanistan -- AFG" and full_GEC_compliant:
         female_vals = {"female", "femme", "woman_girl", "feminin"}
         no_access_vals = {"no", "non", "0", 0}
 
@@ -699,7 +702,8 @@ def add_severity(country,
         #protection_at_school=row['e_incident_ecol'] if country == 'Burkina Faso -- BFA'  else None,
         #protection_to_school=row['e_incident_trajet'] if country == 'Burkina Faso -- BFA'  else None,
         names_severity_4=names_severity_4, 
-        names_severity_5=names_severity_5
+        names_severity_5=names_severity_5,
+        full_GEC_compliant=full_GEC_compliant
 
     ), axis=1)
 
