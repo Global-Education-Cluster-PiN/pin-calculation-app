@@ -37,6 +37,8 @@ from run_config import CASES, ACTIVE_CASE
 
 ACTIVE_CASE = os.environ.get("PIN_CASE") or ACTIVE_CASE   # run_all_cases.py chooses the case through PIN_CASE
 cfg = CASES[ACTIVE_CASE]
+import time
+run_started = time.time()   # used to archive only the files written by this run
 
 # unpack to the names used in the rest of the script
 country, selected_language, label = cfg["country"], cfg["selected_language"], cfg["label"]
@@ -489,3 +491,11 @@ if no_ocha_data:
         for category, df in indicator_per_admin_status.items():
             # Write the DataFrame to a sheet named after the category
             df.to_excel(writer, sheet_name=category, index=False)            
+
+
+# --- archive this run (single runs only: run_all_cases.py archives batch runs itself, including the log)
+if not os.environ.get("PIN_CASE"):
+    from src.run_archive import make_run_archive
+    zip_path = make_run_archive(ACTIVE_CASE, cfg, "success", run_started, time.time(),
+                                archive_inputs=run_config.ARCHIVE_INPUTS)
+    print(f"archived: {zip_path}")
