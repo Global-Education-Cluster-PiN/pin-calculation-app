@@ -6,3 +6,5 @@ to_be_ingnored_checked/
 __pycache__/
 *.pyc
 input_map/old/
+input/
+logs/

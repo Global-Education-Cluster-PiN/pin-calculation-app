@@ -1,10 +1,12 @@
 # Settings for run_PiNcalculation_outside_streamlit*.py
 # Pick the case to run with ACTIVE_CASE; add new countries/years as new keyed entries.
+# To run several cases in a row, list them in RUN_CASES and run run_all_cases.py.
 
-ACTIVE_CASE = "AFG_2026"
+ACTIVE_CASE = "AFG_2026_limited_ban"                         # single run
+RUN_CASES = ["AFG_2026_limited_ban", "AFG_2026_full_ban"]    # batch run (run_all_cases.py)
 
 CASES = {
-    "AFG_2026": {
+    "AFG_2026_limited_ban": {
         
         # --- general
         "country": 'Afghanistan -- AFG',
@@ -68,6 +70,71 @@ CASES = {
                     'Child is associated with armed forces or armed groups',
                     'Pregnancy'],
     },
+    "AFG_2026_full_ban": {
+        
+        # --- general
+        "country": 'Afghanistan -- AFG',
+        "selected_language": 'English',
+        "label": 'label::English',
+        "start_school": 'November',
+        "admin_var": 'Admin_2: Province',
+        "vector_cycle": [14, 16],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 7,
+        # "secondary_end": 17,
+        "hybrid_country": False,  # not set in original: default
+        "mismatch_admin": False,
+        "no_ocha_data": False,  # not set in original: default
+
+        # --- input files
+        "excel_data_path": 'input/AFG/00_Datasets/AFG_MSNA_edu_data.xlsx',
+        "excel_path_ocha": 'input/AFG/10_PiN supporting files/AFG_Population_figures_filled_v2.xlsx',
+        "sheets": {
+            "household": 'hh_main_data',
+            "edu": 'edu_clean_data',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        # TODO: fill in before running (the script stops if all five are None)
+        "host_value": 'general_pop',
+        "idp_value": 'idp',
+        "returnee_value": 'cb_returnee',
+        "refugee_value": None,
+        "other_value": None,
+
+        # --- MSNA variables
+        "status_var": "pop_group",
+        "age_var": "edu_ind_age",
+        "gender_var": "edu_ind_gender",
+        "access_var": "edu_access",
+        "teacher_disruption_var": "edu_disrupted_teacher",
+        "idp_disruption_var": "edu_disrupted_displaced",
+        "natural_hazard_var": "no_indicator",
+        "natural_hazard_var_sev": None,
+        "armed_disruption_var": "no_indicator",
+        "additional_last_var": "no_indicator",
+        "additional_last_sev": None,
+        "additional_2_last_var": "no_indicator",
+        "additional_2_last_sev": None,
+        "barrier_var": "edu_orig_barrier",
+
+        # --- barrier severity
+        "selected_severity_4_barriers": ['Protection risks whilst at the school',
+                    'Protection risks whilst travelling to the school',
+                    "Child needs to work at home or on the household's own farm, i.e. is not earning an income for these activities, but may allow other family members to earn an income",
+                    'Child participating in income generating activities outside of the home',
+                    'Marriage or engagement'],
+
+        "selected_severity_5_barriers": ['There is a ban preventing child from attending',
+                    'Child is associated with armed forces or armed groups',
+                    'Pregnancy'],
+    },
+
 
     "VaSYR_2026": {
         # --- general
