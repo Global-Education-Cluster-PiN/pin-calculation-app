@@ -182,6 +182,27 @@ file_path = os.path.join(out_dir, '00_edu_data_with_severity.xlsx')
 edu_data_severity.to_excel(file_path, index=False, engine='openpyxl')
 
 
+# Parameters used, as on the platform: "Parameters Used" sheet of the PiN results and Parameters_Input_Document.docx.
+# generate_parameters reads the Streamlit session-state names; six of them are named differently in run_config.py.
+param_state = {
+    **cfg,
+    "selected_disruption_natural_hazard_column": natural_hazard_var,
+    "natural_hazard_disruption_severity": natural_hazard_var_sev,
+    "additional_indicator_last_var": additional_last_var,
+    "additional_indicator_last_severity": additional_last_sev,
+    "additional_2_indicator_last_var": additional_2_last_var,
+    "additional_2_indicator_last_severity": additional_2_last_sev,
+}
+if selected_language == "French":
+    parameters = generate_parameters_FR(param_state)
+    doc_parameter_output = generate_word_document_FR(parameters)
+else:
+    parameters = generate_parameters(param_state)
+    doc_parameter_output = generate_word_document(parameters)
+with open(os.path.join(out_dir, "Parameters_Input_Document.docx"), "wb") as f:
+    f.write(doc_parameter_output.getvalue())
+
+
 if ocha_data is not None:
     (indicator_barrier4_list,indicator_barrier_list,severity_admin_status_list, dimension_admin_status_list, severity_female_list, severity_male_list, factor_category,  pin_per_admin_status, dimension_per_admin_status,indicator_per_admin_status,
     female_pin_per_admin_status, male_pin_per_admin_status, 
@@ -219,6 +240,7 @@ if ocha_data is not None:
             ocha=True,
             tot_severity=Tot_PiN_by_admin,
             selected_language=selected_language,
+            parameters=parameters,
             ocha_data=ocha_data
         )
     else:
@@ -232,6 +254,7 @@ if ocha_data is not None:
             ocha=True,
             tot_severity=Tot_PiN_by_admin,
             selected_language=selected_language,
+            parameters=parameters,
             ocha_data=ocha_data
         )
 
