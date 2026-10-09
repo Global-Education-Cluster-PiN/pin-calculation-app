@@ -4,6 +4,7 @@
 
 ACTIVE_CASE = "AFG_2026_limited_ban"                         # single run
 RUN_CASES = ["AFG_2026_limited_ban", "AFG_2026_full_ban"]    # batch run (run_all_cases.py)
+ARCHIVE_INPUTS = True    # True: copy the MSNA dataset and the OCHA file into each successful run's archive zip; False: store only their checksums
 
 CASES = {
     "AFG_2026_limited_ban": {
