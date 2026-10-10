@@ -193,6 +193,9 @@ param_state = {
     "additional_indicator_last_severity": additional_last_sev,
     "additional_2_indicator_last_var": additional_2_last_var,
     "additional_2_indicator_last_severity": additional_2_last_sev,
+    # generate_parameters_FR lists the additional indicators only when these switches are on (set by page 2)
+    "additional_indicator_enable": bool(additional_last_var) and additional_last_var != "no_indicator",
+    "additional_2_indicator_enable": bool(additional_2_last_var) and additional_2_last_var != "no_indicator",
     "pop_group_value_map": {"status_column": cfg["status_var"], "host": cfg["host_value"], "idp": cfg["idp_value"],
                             "returnee": cfg["returnee_value"], "refugee": cfg["refugee_value"], "other": cfg["other_value"]},
 }
