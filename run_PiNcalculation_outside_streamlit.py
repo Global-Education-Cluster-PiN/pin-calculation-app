@@ -184,7 +184,7 @@ edu_data_severity.to_excel(file_path, index=False, engine='openpyxl')
 
 
 # Parameters used, as on the platform: "Parameters Used" sheet of the PiN results and Parameters_Input_Document.docx.
-# generate_parameters reads the Streamlit session-state names; six of them are named differently in run_config.py.
+# generate_parameters reads the Streamlit session-state names; some of them are named differently in run_config.py.
 param_state = {
     **cfg,
     "selected_disruption_natural_hazard_column": natural_hazard_var,
@@ -193,6 +193,8 @@ param_state = {
     "additional_indicator_last_severity": additional_last_sev,
     "additional_2_indicator_last_var": additional_2_last_var,
     "additional_2_indicator_last_severity": additional_2_last_sev,
+    "pop_group_value_map": {"status_column": cfg["status_var"], "host": cfg["host_value"], "idp": cfg["idp_value"],
+                            "returnee": cfg["returnee_value"], "refugee": cfg["refugee_value"], "other": cfg["other_value"]},
 }
 if selected_language == "French":
     parameters = generate_parameters_FR(param_state)

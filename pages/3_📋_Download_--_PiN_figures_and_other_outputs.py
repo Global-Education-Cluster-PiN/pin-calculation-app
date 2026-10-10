@@ -294,18 +294,6 @@ no_ocha_data = st.session_state.get('no_upload_ocha_data', False)
 mismatch_admin = st.session_state.get('mismatch_admin', False)
 
 
-parameters = generate_parameters(st.session_state)
-parameters_FR = generate_parameters_FR(st.session_state)
-
-step_2_hpc = st.session_state.get('step_2_hpc') 
-
-#jena
-data_combination = st.session_state.get('data_combination') 
-other_data = st.session_state.get('uploaded_other_data')
-
-
-# 0.                                                          Scenario/step flags
-###################################################################################################################################################
 hybrid_scenario_countries = [
     'Central African Republic -- CAR',
     'Ethiopia -- ETH',
@@ -318,6 +306,21 @@ hybrid_scenario_countries = [
 
 hybrid_country= False
 if country in hybrid_scenario_countries: hybrid_country= True
+st.session_state['hybrid_country'] = hybrid_country   # recorded in the "Parameters Used" sheet and the parameters Word file
+
+parameters = generate_parameters(st.session_state)
+parameters_FR = generate_parameters_FR(st.session_state)
+
+step_2_hpc = st.session_state.get('step_2_hpc') 
+
+#jena
+data_combination = st.session_state.get('data_combination') 
+other_data = st.session_state.get('uploaded_other_data')
+
+
+# 0.                                                          Scenario/step flags
+###################################################################################################################################################
+# hybrid_country is set above, before the parameters are generated
 step_2_hpc = st.session_state.get('step_2_hpc') 
 
 alternative_countries = ['Niger -- NER', 'Nigeria -- NRA','Mozambique -- MOZ' ]
