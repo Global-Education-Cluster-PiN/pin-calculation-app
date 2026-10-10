@@ -438,7 +438,9 @@ def create_output(country_label, dataframes, overview_df, small_overview_df, ove
                     [{"Category": "HNO Unit of analysis", "Key": key, "Value": value}
                     for key, value in parameters["admin_unit"].items()] +
                     [{"Category": "School Cycles", "Key": key, "Value": value}
-                    for key, value in parameters["school_cycles"].items()]
+                    for key, value in parameters["school_cycles"].items()] +
+                    [{"Category": "Population Groups", "Key": key, "Value": value}
+                    for key, value in parameters.get("population_groups", {}).items()]
                 )
                 parameters_df.to_excel(writer, sheet_name="Parameters Used", index=False)
             elif selected_language == "French":
@@ -454,7 +456,9 @@ def create_output(country_label, dataframes, overview_df, small_overview_df, ove
                     [{"Catégorie": "Unité d’analyse HNO", "Clé": key, "Valeur": value}
                     for key, value in parameters["unité_administrative"].items()] +
                     [{"Catégorie": "Cycles scolaires", "Clé": key, "Valeur": value}
-                    for key, value in parameters["cycles_scolaires"].items()]
+                    for key, value in parameters["cycles_scolaires"].items()] +
+                    [{"Catégorie": "Groupes de population", "Clé": key, "Valeur": value}
+                    for key, value in parameters.get("groupes_de_population", {}).items()]
                 )
                 parameters_df.to_excel(writer, sheet_name="Paramètres Utilisés", index=False)
 

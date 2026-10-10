@@ -18,6 +18,16 @@ import matplotlib as mpl
 from docx import Document
 from datetime import datetime
 
+# The five OCHA population groups: key used in pop_group_value_map (page 2) -> label in the OCHA file
+POP_GROUP_LABELS = [
+    ("host", "Host/Hôte -- Children/Enfants (5-17)"),
+    ("idp", "IDP/PDI -- Children/Enfants (5-17)"),
+    ("returnee", "Returnees/Retournés -- Children/Enfants (5-17)"),
+    ("refugee", "Refugees/Refugiees -- Children/Enfants (5-17)"),
+    ("other", "Other -- Children/Enfants (5-17)"),
+]
+
+
 
 
 
@@ -111,10 +121,17 @@ def generate_parameters(st_session_state):
         "aggravating circumstances": st_session_state.get('selected_severity_5_barriers', []),
     }
 
+    # Population groups confirmed on page 2; groups not provided stay empty
+    pop_map = st_session_state.get('pop_group_value_map') or {}
+    population_groups = {"status variable": pop_map.get('status_column') or st_session_state.get('status_var')}
+    population_groups.update({label: pop_map.get(key) or "" for key, label in POP_GROUP_LABELS})
+
     parameters = {
         "general_info": {
             "country": country,
-            "date_calculation": datetime.now().strftime("%d/%m/%Y %H:%M")
+            "date_calculation": datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "hybrid_country": st_session_state.get('hybrid_country', False),
+            "full_GEC_compliant": st_session_state.get('full_GEC_compliant', True),
         },
         "msna_indicators_per_PiN_dimension": {
             "access": access_col,
@@ -133,7 +150,9 @@ def generate_parameters(st_session_state):
         },
         "school_cycles": {
             "age_ranges": st_session_state.get('vector_cycle'),
-        }
+            "start_school": st_session_state.get('start_school'),
+        },
+        "population_groups": population_groups,
     }
 
     return parameters
@@ -151,7 +170,8 @@ def generate_word_document(parameters):
     doc.add_heading('General Information', level=2)
     general_info = parameters["general_info"]
     for key, value in general_info.items():
-        doc.add_paragraph(f"{key.replace('_', ' ').capitalize()}: {value}", style='List Bullet')
+        label = key.replace('_', ' ')
+        doc.add_paragraph(f"{label[:1].upper()}{label[1:]}: {value}", style='List Bullet')   # keeps "GEC" in capitals
 
     # Add MSNA Indicators
     # Add MSNA Indicators
@@ -240,6 +260,12 @@ def generate_word_document(parameters):
         school_cycles = parameters.get("school_cycles", {})
         age_ranges = school_cycles.get("age_ranges", [])
         doc.add_paragraph(f"Age Ranges: {age_ranges}", style='List Bullet')
+        doc.add_paragraph(f"School start month: {school_cycles.get('start_school')}", style='List Bullet')
+
+        # Add Population Groups
+        doc.add_heading('Population Groups', level=2)
+        for key, value in parameters.get("population_groups", {}).items():
+            doc.add_paragraph(f"{key[:1].upper()}{key[1:]}: {value}", style='List Bullet')
 
         # Save the Word document to a BytesIO object
         doc_output = BytesIO()

@@ -17,6 +17,16 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 import matplotlib as mpl
 from docx import Document
 from datetime import datetime
+
+# The five OCHA population groups: key used in pop_group_value_map (page 2) -> libellé du fichier OCHA
+POP_GROUP_LABELS = [
+    ("host", "Host/Hôte -- Children/Enfants (5-17)"),
+    ("idp", "IDP/PDI -- Children/Enfants (5-17)"),
+    ("returnee", "Returnees/Retournés -- Children/Enfants (5-17)"),
+    ("refugee", "Refugees/Refugiees -- Children/Enfants (5-17)"),
+    ("other", "Other -- Children/Enfants (5-17)"),
+]
+
 def generate_parameters_FR(st_session_state):
     """
     Génère le dictionnaire des paramètres (FR) pour le calcul PiN.
@@ -108,10 +118,17 @@ def generate_parameters_FR(st_session_state):
         "circonstances_aggravantes": st_session_state.get('selected_severity_5_barriers', []),
     }
 
+    # Groupes de population confirmés à la page 2 ; les groupes non fournis restent vides
+    pop_map = st_session_state.get('pop_group_value_map') or {}
+    groupes_population = {"variable de statut": pop_map.get('status_column') or st_session_state.get('status_var')}
+    groupes_population.update({label: pop_map.get(key) or "" for key, label in POP_GROUP_LABELS})
+
     parameters = {
         "informations_generales": {
             "pays": pays,
             "date_du_calcul": datetime.now().strftime("%d/%m/%Y %H:%M"),
+            "hybrid_country": st_session_state.get('hybrid_country', False),
+            "full_GEC_compliant": st_session_state.get('full_GEC_compliant', True),
         },
         "indicateurs_msna_par_dimension": {
             "accès": acces_col,
@@ -130,7 +147,9 @@ def generate_parameters_FR(st_session_state):
         },
         "cycles_scolaires": {
             "tranches_d_age": st_session_state.get('vector_cycle'),
-        }
+            "mois_de_rentrée_scolaire": st_session_state.get('start_school'),
+        },
+        "groupes_de_population": groupes_population,
     }
     return parameters
 
@@ -146,7 +165,8 @@ def generate_word_document_FR(parameters):
     doc.add_heading('Informations Générales', level=2)
     general_info = parameters["informations_generales"]
     for key, value in general_info.items():
-        doc.add_paragraph(f"{key.replace('_', ' ').capitalize()}: {value}", style='List Bullet')
+        label = key.replace('_', ' ')
+        doc.add_paragraph(f"{label[:1].upper()}{label[1:]}: {value}", style='List Bullet')   # garde "GEC" en majuscules
 
     # Indicateurs MSNA par dimension
     doc.add_heading('Indicateurs/Variables MSNA par Dimension', level=2)
@@ -221,6 +241,12 @@ def generate_word_document_FR(parameters):
     cycles = parameters.get("cycles_scolaires", {})
     tranches = cycles.get("tranches_d_age", [])
     doc.add_paragraph(f"Tranches d'âge: {tranches}", style='List Bullet')
+    doc.add_paragraph(f"Mois de rentrée scolaire: {cycles.get('mois_de_rentrée_scolaire')}", style='List Bullet')
+
+    # Groupes de population
+    doc.add_heading('Groupes de Population', level=2)
+    for key, value in parameters.get("groupes_de_population", {}).items():
+        doc.add_paragraph(f"{key[:1].upper()}{key[1:]}: {value}", style='List Bullet')
 
     # Export
     output = BytesIO()
