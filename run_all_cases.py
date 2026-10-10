@@ -17,7 +17,9 @@ for case in run_config.RUN_CASES:
     with open(log_path, "w", encoding="utf-8") as log:
         proc = subprocess.Popen(
             [sys.executable, "run_PiNcalculation_outside_streamlit.py"],
-            env={**os.environ, "PIN_CASE": case, "PYTHONUNBUFFERED": "1"},   # unbuffered: lines appear as they are printed
+            # unbuffered: lines appear as they are printed; Agg: charts are only saved to files, and IDE backends
+            # (e.g. Positron's MPLBACKEND) cannot be imported in the child process
+            env={**os.environ, "PIN_CASE": case, "PYTHONUNBUFFERED": "1", "MPLBACKEND": "Agg"},
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8", errors="replace")
         for line in proc.stdout:          # show progress live and keep a log per case
             print(line, end="")
