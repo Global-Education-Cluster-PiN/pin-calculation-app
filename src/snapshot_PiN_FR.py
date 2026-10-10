@@ -423,6 +423,21 @@ def create_snapshot_PiN_FR(country_label, final_overview_df, final_overview_df_O
     ece_strata = [ece_5yo_label]
     label_disabilty = "Enfants en situation de handicap"
 
+    # dimension columns are not translated (same names in both languages)
+    label_perc_acc = '% Access'
+    label_perc_agg= '% Aggravating circumstances'
+    label_perc_lc = '% Learning conditions'
+    label_perc_penv = '% Protected environment'
+    label_perc_out = '% Not in need'
+    label_tot_acc = '# Access'
+    label_tot_agg= '# Aggravating circumstances'
+    label_tot_lc = '# Learning conditions'
+    label_tot_penv = '# Protected environment'
+
+    group_gender ={
+        'Filles (5-17 ans)' : "#3c1642",
+        "Garcons (5-17 ans)": "#1dd3b0"
+    }
 
     if step1:
         label_perc2 = '% severity levels 1-2'
@@ -437,15 +452,6 @@ def create_snapshot_PiN_FR(country_label, final_overview_df, final_overview_df_O
         label_tot = '# Tot PiN (severity levels 3-5)'
         label_admin_severity = 'Area severity'
         label_tot_population = 'TotN'
-        label_perc_acc = '% Access'
-        label_perc_agg= '% Aggravating circumstances'
-        label_perc_lc = '% Learning conditions'
-        label_perc_penv = '% Protected environment'
-        label_perc_out = '% Not in need'
-        label_tot_acc = '# Access'
-        label_tot_agg= '# Aggravating circumstances'
-        label_tot_lc = '# Learning conditions'
-        label_tot_penv = '# Protected environment'
         tot_5_17_label = 'TOTAL (5-17 y.o.)'
         girl_5_17_label = 'Girls (5-17 y.o.)'
         boy_5_17_label = 'Boys (5-17 y.o.)'
