@@ -10,6 +10,7 @@ A Streamlit-based web application to calculate Education People in Need (PiN) fi
   - [Pages Structure](#pages-structure)
   - [Source Functions (`src/`)](#source-functions-src)
     - [Core Calculation Functions](#core-calculation-functions)
+    - [Severity Classification and Indicator Counting](#severity-classification-and-indicator-counting)
     - [Output Generation Functions](#output-generation-functions)
     - [Hybrid Workflow Functions](#hybrid-workflow-functions)
   - [Supporting Files](#supporting-files)
@@ -151,6 +152,20 @@ src/
 - Handles special cases for disruption indicators
 - Creates severity columns for: access, teacher disruption, IDP disruption, armed group disruption, natural hazards, barriers
 - Returns dataset with added severity columns
+
+#### **Severity Classification and Indicator Counting**
+
+Each child receives one severity level (`calculate_severity()` in `add_PiN_severity.py`):
+- **Out-of-school children**: severity 5 if their barrier is in the severity 5 list, severity 4 if it is in the severity 4 list, otherwise severity 3.
+- **In-school children**: the highest level triggered by their answers: school occupied by armed groups → 5; school used as IDP shelter → 4; teacher absence → 3; natural hazard and additional indicators → the severity set for them on Page 2 (3 or 4). With none of these, severity 1-2.
+- Afghanistan: with `full_GEC_compliant` (default), out-of-school girls older than 12 are severity 5.
+
+In the PiN by indicator file, **every child at severity 3, 4 or 5 is counted under exactly one indicator, never twice**, so the indicators of each severity level add up to the PiN of that level. When a child in school has several disruptions at the same level, the first one in this order is used:
+- **Severity 3**: teacher absence > natural hazard > additional indicator 1 > additional indicator 2
+- **Severity 4**: school used as IDP shelter > natural hazard > additional indicator 1 > additional indicator 2
+- **Severity 5**: school occupied by armed groups
+
+Out-of-school children are counted only under access (severity 3) or their barrier (severity 4 and 5), never under the in-school indicators.
 
 **`calculatePIN()`** (`calculation_for_PiN_Dimension.py`)
 - **Main PiN calculation function** for standard MSNA countries

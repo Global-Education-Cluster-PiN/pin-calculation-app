@@ -52,6 +52,11 @@ label_perc_sev3_indicator_teacher = 'severity level 3 -- in-school children -- %
 label_perc_sev3_indicator_hazard = 'severity level 3 -- in-school children -- % of children whose education was disrupted by natural hazard'
 label_perc_sev4_indicator_idp = 'severity level 4 -- in-school children -- % of children whose education was disrupted by the school being used as shelter'
 label_perc_sev5_indicator_occupation = 'severity level 5 -- in-school children -- % of children whose education was disrupted by the school being occupied by armed groups'
+label_perc_sev4_indicator_hazard = 'severity level 4 -- in-school children -- % of children whose education was disrupted by natural hazard'
+label_perc_sev3_indicator_additional = 'severity level 3 -- in-school children -- % of children whose education was disrupted (additional indicator 1)'
+label_perc_sev4_indicator_additional = 'severity level 4 -- in-school children -- % of children whose education was disrupted (additional indicator 1)'
+label_perc_sev3_indicator_additional2 = 'severity level 3 -- in-school children -- % of children whose education was disrupted (additional indicator 2)'
+label_perc_sev4_indicator_additional2 = 'severity level 4 -- in-school children -- % of children whose education was disrupted (additional indicator 2)'
 label_perc_sev4_aggravating_circumstances = 'severity level 4, indicator: individual aggravating circumstances (cumulative of all Level 4 aggravating circumstances) -- % of children'
 label_perc_sev5_aggravating_circumstances = 'severity level 5, indicator: individual aggravating circumstances (cumulative of all Level 5 aggravating circumstances) -- % of children'
 
@@ -1005,7 +1010,8 @@ def process_indicator_dataframes(indicator_access_list, indicator_dataframes, ch
         essential_columns = [admin_var, pop_group_var]
         optional_columns = [
              'indicator_teacher', 'indicator_hazard','indicator_access',
-            'indicator_idp', 'indicator_occupation', 'indicator_barrier4', 'indicator_barrier5'
+            'indicator_idp', 'indicator_occupation', 'indicator_barrier4', 'indicator_barrier5',
+            'indicator_hazard4', 'indicator_additional', 'indicator_additional4', 'indicator_additional2', 'indicator_additional2_4'
         ]
         essential_columns += [col for col in optional_columns if col in sample_df.columns]
 
@@ -1015,6 +1021,11 @@ def process_indicator_dataframes(indicator_access_list, indicator_dataframes, ch
                 'indicator_access': 'sev3_indicator_access',
                 'indicator_teacher': 'sev3_indicator_teacher',
                 'indicator_hazard': 'sev3_indicator_hazard',
+                'indicator_hazard4': 'sev4_indicator_hazard',
+                'indicator_additional': 'sev3_indicator_additional',
+                'indicator_additional4': 'sev4_indicator_additional',
+                'indicator_additional2': 'sev3_indicator_additional2',
+                'indicator_additional2_4': 'sev4_indicator_additional2',
                 'indicator_idp': 'sev4_indicator_idp',
                 'indicator_occupation': 'sev5_indicator_occupation',
                 'indicator_barrier4': 'sev4_aggravating_circumstances',
@@ -1226,6 +1237,11 @@ def calculatePIN_NO_OCHA_2025 (country, edu_data, household_data, choice_data, s
         'indicator.occupation': {'df': df, 'target_var': 'indicator.occupation'},
         'indicator.barrier4': {'df': df, 'target_var': 'indicator.barrier4'},
         'indicator.barrier5': {'df': df, 'target_var': 'indicator.barrier5'},
+        'indicator.hazard4': {'df': df, 'target_var': 'indicator.hazard4'},
+        'indicator.additional': {'df': df, 'target_var': 'indicator.additional'},
+        'indicator.additional4': {'df': df, 'target_var': 'indicator.additional4'},
+        'indicator.additional2': {'df': df, 'target_var': 'indicator.additional2'},
+        'indicator.additional2_4': {'df': df, 'target_var': 'indicator.additional2_4'},
         'barrier_var_copy': {'df': df, 'target_var': 'barrier_var_copy'}
     }
 
@@ -1292,6 +1308,11 @@ def calculatePIN_NO_OCHA_2025 (country, edu_data, household_data, choice_data, s
     indicator_barrier4_list = results_dict.get('indicator.barrier4')
     indicator_barrier5_list = results_dict.get('indicator.barrier5')
     indicator_barrier_list = results_dict.get('barrier_var_copy')
+    indicator_hazard4_list = results_dict.get('indicator.hazard4')
+    indicator_additional_list = results_dict.get('indicator.additional')
+    indicator_additional4_list = results_dict.get('indicator.additional4')
+    indicator_additional2_list = results_dict.get('indicator.additional2')
+    indicator_additional2_4_list = results_dict.get('indicator.additional2_4')
 
     ## checking number of columns
     # Ensure columns for severity
@@ -1320,6 +1341,11 @@ def calculatePIN_NO_OCHA_2025 (country, edu_data, household_data, choice_data, s
     indicator_occupation_list = clean_indicator_columns(indicator_occupation_list, 'indicator_occupation_list')
     indicator_barrier4_list = clean_indicator_columns(indicator_barrier4_list, 'indicator_barrier4_list')
     indicator_barrier5_list = clean_indicator_columns(indicator_barrier5_list, 'indicator_barrier5_list')
+    indicator_hazard4_list = clean_indicator_columns(indicator_hazard4_list, 'indicator_hazard4_list')
+    indicator_additional_list = clean_indicator_columns(indicator_additional_list, 'indicator_additional_list')
+    indicator_additional4_list = clean_indicator_columns(indicator_additional4_list, 'indicator_additional4_list')
+    indicator_additional2_list = clean_indicator_columns(indicator_additional2_list, 'indicator_additional2_list')
+    indicator_additional2_4_list = clean_indicator_columns(indicator_additional2_4_list, 'indicator_additional2_4_list')
     #indicator_barrier_list = clean_indicator_columns(indicator_barrier_list, 'indicator_barrier_list')
 
 
@@ -1334,6 +1360,11 @@ def calculatePIN_NO_OCHA_2025 (country, edu_data, household_data, choice_data, s
         indicator_occupation_list,
         indicator_barrier4_list,
         indicator_barrier5_list,
+        indicator_hazard4_list,
+        indicator_additional_list,
+        indicator_additional4_list,
+        indicator_additional2_list,
+        indicator_additional2_4_list,
         indicator_barrier_list
     ]
 
@@ -1440,6 +1471,11 @@ def calculatePIN_NO_OCHA_2025 (country, edu_data, household_data, choice_data, s
 
             'sev3_indicator_teacher': label_perc_sev3_indicator_teacher,
             'sev3_indicator_hazard': label_perc_sev3_indicator_hazard,
+            'sev4_indicator_hazard': label_perc_sev4_indicator_hazard,
+            'sev3_indicator_additional': label_perc_sev3_indicator_additional,
+            'sev4_indicator_additional': label_perc_sev4_indicator_additional,
+            'sev3_indicator_additional2': label_perc_sev3_indicator_additional2,
+            'sev4_indicator_additional2': label_perc_sev4_indicator_additional2,
             'sev3_indicator_access': label_perc_sev3_indicator_access,
             'sev4_indicator_idp': label_perc_sev4_indicator_idp,
             'sev5_indicator_occupation': label_perc_sev5_indicator_occupation,
@@ -1565,6 +1601,11 @@ def calculatePIN_NO_OCHA_2025 (country, edu_data, household_data, choice_data, s
             label_perc_sev3_indicator_access: "Niveau de sévérité 3 -- enfants non scolarisés -- % d'enfants n'ayant pas accès à l'éducation et ne souffrant d'aucune circonstance aggravante",
             label_perc_sev3_indicator_teacher : "Niveau de sévérité 3 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée par l'absence d'un enseignant",
             label_perc_sev3_indicator_hazard : "Niveau de sévérité 3 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée par un risque naturel",
+            label_perc_sev4_indicator_hazard : "Niveau de sévérité 4 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée par un risque naturel",
+            label_perc_sev3_indicator_additional : "Niveau de sévérité 3 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 1)",
+            label_perc_sev4_indicator_additional : "Niveau de sévérité 4 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 1)",
+            label_perc_sev3_indicator_additional2 : "Niveau de sévérité 3 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 2)",
+            label_perc_sev4_indicator_additional2 : "Niveau de sévérité 4 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 2)",
             label_perc_sev4_indicator_idp : "Niveau de sévérité 4 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée par l'utilisation de l'école comme abri",
             label_perc_sev5_indicator_occupation : "Niveau de sévérité 5 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée par l'occupation de l'école par des groupes armés",
             "severity level 4 -- OoS children -- % of children not accessing education due to the aggravating circumstance": "niveau de sévérité 4 -- enfants non scolarisés -- % d'enfants n'ayant pas accès à l'éducation en raison de la circonstance aggravante ",

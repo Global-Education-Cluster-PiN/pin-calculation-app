@@ -221,7 +221,9 @@ def calculate_severity(country, gender, age, access, barrier,
 ##--------------------------------------------------------------------------------------------
 
 ##--------------------------------------------------------------------------------------------
-def add_indicator_columns(data, access_var, teacher_disruption_var, natural_hazard_var, idp_disruption_var, armed_disruption_var, barrier_var, names_severity_4, names_severity_5):
+def add_indicator_columns(data, access_var, teacher_disruption_var, natural_hazard_var, idp_disruption_var, armed_disruption_var, barrier_var, names_severity_4, names_severity_5,
+                          natural_hazard_var_sev=None, additional_last_var='no_indicator', additional_last_sev=None,
+                          additional_2_last_var='no_indicator', additional_2_last_sev=None):
     """
     Add indicator columns to the dataset and set their values based on conditions,
     taking severity into account.
@@ -236,6 +238,9 @@ def add_indicator_columns(data, access_var, teacher_disruption_var, natural_haza
         barrier_var (str): Column name for barrier indicator.
         names_severity_4 (list): List of barrier names for severity 4.
         names_severity_5 (list): List of barrier names for severity 5.
+        natural_hazard_var_sev, additional_last_sev, additional_2_last_sev: severity (3 or 4) of the natural hazard
+            and additional indicators, as used in calculate_severity.
+        additional_last_var, additional_2_last_var (str): Column names for the additional indicators.
 
     Returns:
         pd.DataFrame: The updated DataFrame with new indicator columns.
@@ -269,33 +274,47 @@ def add_indicator_columns(data, access_var, teacher_disruption_var, natural_haza
         lambda row: 1 if row['severity_category'] == 3 and normalize(row[access_var]) in no_answers else 0, axis=1
     )
 
-    # Ensure teacher and hazard are mutually exclusive (teacher has priority)
-    def set_teacher_hazard(row):
-        """ Ensure teacher has priority over hazard, and handle missing hazard data """
-        t_val = normalize(row[teacher_disruption_var]) if teacher_disruption_var != no_indicator else ""
-        h_val = normalize(row[natural_hazard_var]) if natural_hazard_var != no_indicator else ""
+    # Severity of the natural hazard and additional indicators, as in calculate_severity (3 when not set)
+    hazard_sev = natural_hazard_var_sev if isinstance(natural_hazard_var_sev, int) else 3
+    additional_sev = additional_last_sev if isinstance(additional_last_sev, int) else 3
+    additional_2_sev = additional_2_last_sev if isinstance(additional_2_last_sev, int) else 3
 
-        if row['severity_category'] not in [4, 5]:  # Apply only if severity is not 4 or 5
-            if t_val in yes_answers:
-                return 1, 0  # Teacher = 1, Hazard = 0 (teacher takes priority)
-            elif h_val in yes_answers:
-                return 0, 1  # Teacher = 0, Hazard = 1
-        
-        return 0, 0  # Default case if none of the conditions are met
+    def is_yes(row, var):
+        return var != no_indicator and normalize(row[var]) in yes_answers
 
-    # Apply mutually exclusive logic
-    data[['indicator.teacher', 'indicator.hazard']] = data.apply(
-        lambda row: set_teacher_hazard(row), axis=1, result_type='expand'
-    )
+    # In-school children: each child at severity 3 or 4 is counted under exactly one indicator, the first that applies:
+    #   severity 3: teacher > hazard > additional > additional2
+    #   severity 4: idp shelter > hazard > additional > additional2
+    def in_school_indicator(row):
+        if normalize(row[access_var]) not in yes_answers:
+            return None
+        if row['severity_category'] == 3:
+            candidates = [
+                ('teacher', is_yes(row, teacher_disruption_var)),
+                ('hazard', hazard_sev == 3 and is_yes(row, natural_hazard_var)),
+                ('additional', additional_sev == 3 and is_yes(row, additional_last_var)),
+                ('additional2', additional_2_sev == 3 and is_yes(row, additional_2_last_var)),
+            ]
+        elif row['severity_category'] == 4:
+            candidates = [
+                ('idp', is_yes(row, idp_disruption_var)),
+                ('hazard4', hazard_sev == 4 and is_yes(row, natural_hazard_var)),
+                ('additional4', additional_sev == 4 and is_yes(row, additional_last_var)),
+                ('additional2_4', additional_2_sev == 4 and is_yes(row, additional_2_last_var)),
+            ]
+        else:
+            return None
+        return next((name for name, applies in candidates if applies), None)
 
-    if idp_disruption_var != no_indicator:
-        data['indicator.idp'] = data.apply(
-            lambda row: 1 if row['severity_category'] == 4 and normalize(row[idp_disruption_var]) in yes_answers else 0, axis=1
-        )
+    in_school = data.apply(in_school_indicator, axis=1)
+    for name in ['teacher', 'hazard', 'additional', 'additional2', 'idp', 'hazard4', 'additional4', 'additional2_4']:
+        data[f'indicator.{name}'] = (in_school == name).astype(int)
 
+    # in-school children only: out-of-school children at severity 5 are counted under their barrier
     if armed_disruption_var != no_indicator:
         data['indicator.occupation'] = data.apply(
-            lambda row: 1 if row['severity_category'] == 5 and normalize(row[armed_disruption_var]) in yes_answers else 0, axis=1
+            lambda row: 1 if row['severity_category'] == 5 and normalize(row[access_var]) in yes_answers
+                             and normalize(row[armed_disruption_var]) in yes_answers else 0, axis=1
         )
 
     data['indicator.barrier4'] = data.apply(
@@ -722,7 +741,12 @@ def add_severity(country,
         armed_disruption_var=armed_disruption_var,
         barrier_var=barrier_var,
         names_severity_4=names_severity_4,
-        names_severity_5=names_severity_5
+        names_severity_5=names_severity_5,
+        natural_hazard_var_sev=natural_hazard_var_sev,
+        additional_last_var=additional_last_var,
+        additional_last_sev=additional_last_sev,
+        additional_2_last_var=additional_2_last_var,
+        additional_2_last_sev=additional_2_last_sev
     )
 
     edu_data = add_indicator_columns_for_EMIS(

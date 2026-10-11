@@ -1157,7 +1157,8 @@ def process_indicator_dataframes(indicator_access_list, indicator_dataframes, ch
         essential_columns = [admin_var, pop_group_var]
         optional_columns = [
             'indicator_teacher', 'indicator_hazard','indicator_access', 
-            'indicator_idp', 'indicator_occupation', 'indicator_barrier4', 'indicator_barrier5'
+            'indicator_idp', 'indicator_occupation', 'indicator_barrier4', 'indicator_barrier5',
+            'indicator_hazard4', 'indicator_additional', 'indicator_additional4', 'indicator_additional2', 'indicator_additional2_4'
         ]
         essential_columns += [col for col in optional_columns if col in sample_df.columns]
 
@@ -1166,6 +1167,11 @@ def process_indicator_dataframes(indicator_access_list, indicator_dataframes, ch
             col: new_name for col, new_name in {
                 'indicator_teacher': 'sev3_indicator_teacher',
                 'indicator_hazard': 'sev3_indicator_hazard',
+                'indicator_hazard4': 'sev4_indicator_hazard',
+                'indicator_additional': 'sev3_indicator_additional',
+                'indicator_additional4': 'sev4_indicator_additional',
+                'indicator_additional2': 'sev3_indicator_additional2',
+                'indicator_additional2_4': 'sev4_indicator_additional2',
                 'indicator_access': 'sev3_indicator_access',
                 'indicator_idp': 'sev4_indicator_idp',
                 'indicator_occupation': 'sev5_indicator_occupation',
@@ -1337,6 +1343,11 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
             'indicator.occupation': {'df': df, 'target_var': 'indicator.occupation'},
             'indicator.barrier4': {'df': df, 'target_var': 'indicator.barrier4'},
             'indicator.barrier5': {'df': df, 'target_var': 'indicator.barrier5'},
+            'indicator.hazard4': {'df': df, 'target_var': 'indicator.hazard4'},
+            'indicator.additional': {'df': df, 'target_var': 'indicator.additional'},
+            'indicator.additional4': {'df': df, 'target_var': 'indicator.additional4'},
+            'indicator.additional2': {'df': df, 'target_var': 'indicator.additional2'},
+            'indicator.additional2_4': {'df': df, 'target_var': 'indicator.additional2_4'},
             'barrier_var_copy': {'df': df, 'target_var': 'barrier_var_copy'}
             }
 
@@ -1412,6 +1423,11 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
     indicator_barrier4_list = results_dict.get('indicator.barrier4')
     indicator_barrier5_list = results_dict.get('indicator.barrier5')
     indicator_barrier_list = results_dict.get('barrier_var_copy')
+    indicator_hazard4_list = results_dict.get('indicator.hazard4')
+    indicator_additional_list = results_dict.get('indicator.additional')
+    indicator_additional4_list = results_dict.get('indicator.additional4')
+    indicator_additional2_list = results_dict.get('indicator.additional2')
+    indicator_additional2_4_list = results_dict.get('indicator.additional2_4')
 
 
     ## checking number of columns
@@ -1442,6 +1458,11 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
     indicator_occupation_list = clean_indicator_columns(indicator_occupation_list, 'indicator_occupation_list')
     indicator_barrier4_list = clean_indicator_columns(indicator_barrier4_list, 'indicator_barrier4_list')
     indicator_barrier5_list = clean_indicator_columns(indicator_barrier5_list, 'indicator_barrier5_list')
+    indicator_hazard4_list = clean_indicator_columns(indicator_hazard4_list, 'indicator_hazard4_list')
+    indicator_additional_list = clean_indicator_columns(indicator_additional_list, 'indicator_additional_list')
+    indicator_additional4_list = clean_indicator_columns(indicator_additional4_list, 'indicator_additional4_list')
+    indicator_additional2_list = clean_indicator_columns(indicator_additional2_list, 'indicator_additional2_list')
+    indicator_additional2_4_list = clean_indicator_columns(indicator_additional2_4_list, 'indicator_additional2_4_list')
     #indicator_barrier_list = clean_indicator_columns(indicator_barrier_list, 'indicator_barrier_list')
 
 
@@ -1455,6 +1476,11 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
         indicator_occupation_list,
         indicator_barrier4_list,
         indicator_barrier5_list,
+        indicator_hazard4_list,
+        indicator_additional_list,
+        indicator_additional4_list,
+        indicator_additional2_list,
+        indicator_additional2_4_list,
         indicator_barrier_list
     ]
 
@@ -1688,6 +1714,11 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
                 'sev3_indicator_access': 'severity level 3: indicator Access',
                 'sev3_indicator_teacher': 'severity level 3: indicator Teacher Absence Disruption',
                 'sev3_indicator_hazard': 'severity level 3: indicator Natural Hazard Disruption',
+                'sev4_indicator_hazard': 'severity level 4: indicator Natural Hazard Disruption',
+                'sev3_indicator_additional': 'severity level 3: indicator Additional Indicator 1',
+                'sev4_indicator_additional': 'severity level 4: indicator Additional Indicator 1',
+                'sev3_indicator_additional2': 'severity level 3: indicator Additional Indicator 2',
+                'sev4_indicator_additional2': 'severity level 4: indicator Additional Indicator 2',
                 'sev4_indicator_idp': 'severity level 4: indicator School Used As Shelter Disruption',
                 'sev5_indicator_occupation': 'severity level 5: indicator School Occupation Disruption',
                 'sev4_aggravating_circumstances': 'severity level 4: indicator aggravating circumstances (cumulative of all Level 4 aggravating circumstances)',
@@ -2392,6 +2423,19 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
         'severity level 5: indicator aggravating circumstances (cumulative of all Level 5 aggravating circumstances)',
         'severity level 5: (ToT # children) indicator aggravating circumstances (cumulative of all Level 5 aggravating circumstances)'
     ]
+    # short label -> label in the output, for the severity 4 natural hazard and the additional indicators
+    extra_indicator_labels = {
+        "severity level 4: indicator Natural Hazard Disruption": "severity level 4 -- in-school children -- % of children whose education was disrupted by natural hazard",
+        "severity level 4: (ToT # children) indicator Natural Hazard Disruption": "severity level 4 -- in-school children -- ToT # of children whose education was disrupted by natural hazard",
+        "severity level 3: indicator Additional Indicator 1": "severity level 3 -- in-school children -- % of children whose education was disrupted (additional indicator 1)",
+        "severity level 3: (ToT # children) indicator Additional Indicator 1": "severity level 3 -- in-school children -- ToT # of children whose education was disrupted (additional indicator 1)",
+        "severity level 4: indicator Additional Indicator 1": "severity level 4 -- in-school children -- % of children whose education was disrupted (additional indicator 1)",
+        "severity level 4: (ToT # children) indicator Additional Indicator 1": "severity level 4 -- in-school children -- ToT # of children whose education was disrupted (additional indicator 1)",
+        "severity level 3: indicator Additional Indicator 2": "severity level 3 -- in-school children -- % of children whose education was disrupted (additional indicator 2)",
+        "severity level 3: (ToT # children) indicator Additional Indicator 2": "severity level 3 -- in-school children -- ToT # of children whose education was disrupted (additional indicator 2)",
+        "severity level 4: indicator Additional Indicator 2": "severity level 4 -- in-school children -- % of children whose education was disrupted (additional indicator 2)",
+        "severity level 4: (ToT # children) indicator Additional Indicator 2": "severity level 4 -- in-school children -- ToT # of children whose education was disrupted (additional indicator 2)",
+    }
     for category, df in indicator_per_admin_status.items():
         print(f"\n📌 Processing Category: {category}")
         
@@ -2441,6 +2485,9 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
                 "severity level 3: (ToT # children) indicator Natural Hazard Disruption",
                 "severity level 3 -- in-school children -- ToT # of children whose education was disrupted by natural hazard"
             )
+            # severity 4 natural hazard and additional indicators (in-school children)
+            for short_label, long_label in extra_indicator_labels.items():
+                new_col = new_col.replace(short_label, long_label)
 
             # Track renaming changes
             if new_col != col:
@@ -2517,6 +2564,16 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
         "severity level 3 -- OoS children -- ToT # of children not accessing education who do not face any aggravating circumstances": "Niveau de sévérité 3 -- enfants non scolarisés -- # d'enfants n'ayant pas accès à l'éducation et ne souffrant d'aucune circonstance aggravante",
         "severity level 3 -- in-school children -- ToT # of children whose education was disrupted by teacher absence" : "Niveau de sévérité 3 -- enfants scolarisés -- # d'enfants dont l'éducation a été perturbée par l'absence d'un enseignant",
         "severity level 3 -- in-school children -- ToT # of children whose education was disrupted by natural hazard" : "Niveau de sévérité 3 -- enfants scolarisés -- # d'enfants dont l'éducation a été perturbée par un risque naturel",
+        "severity level 4 -- in-school children -- % of children whose education was disrupted by natural hazard" : "Niveau de sévérité 4 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée par un risque naturel",
+        "severity level 4 -- in-school children -- ToT # of children whose education was disrupted by natural hazard" : "Niveau de sévérité 4 -- enfants scolarisés -- # d'enfants dont l'éducation a été perturbée par un risque naturel",
+        "severity level 3 -- in-school children -- % of children whose education was disrupted (additional indicator 1)" : "Niveau de sévérité 3 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 1)",
+        "severity level 3 -- in-school children -- ToT # of children whose education was disrupted (additional indicator 1)" : "Niveau de sévérité 3 -- enfants scolarisés -- # d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 1)",
+        "severity level 4 -- in-school children -- % of children whose education was disrupted (additional indicator 1)" : "Niveau de sévérité 4 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 1)",
+        "severity level 4 -- in-school children -- ToT # of children whose education was disrupted (additional indicator 1)" : "Niveau de sévérité 4 -- enfants scolarisés -- # d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 1)",
+        "severity level 3 -- in-school children -- % of children whose education was disrupted (additional indicator 2)" : "Niveau de sévérité 3 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 2)",
+        "severity level 3 -- in-school children -- ToT # of children whose education was disrupted (additional indicator 2)" : "Niveau de sévérité 3 -- enfants scolarisés -- # d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 2)",
+        "severity level 4 -- in-school children -- % of children whose education was disrupted (additional indicator 2)" : "Niveau de sévérité 4 -- enfants scolarisés -- % d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 2)",
+        "severity level 4 -- in-school children -- ToT # of children whose education was disrupted (additional indicator 2)" : "Niveau de sévérité 4 -- enfants scolarisés -- # d'enfants dont l'éducation a été perturbée (indicateur supplémentaire 2)",
         "severity level 4 -- in-school children -- ToT # of children whose education was disrupted by the school being used as shelter" : "Niveau de sévérité 4 -- enfants scolarisés -- # d'enfants dont l'éducation a été perturbée par l'utilisation de l'école comme abri",
         "severity level 5 -- in-school children -- ToT # of children whose education was disrupted by the school being occupied by armed groups" : "Niveau de sévérité 5 -- enfants scolarisés -- # d'enfants dont l'éducation a été perturbée par l'occupation de l'école par des groupes armés",
         "severity level 4 -- OoS children -- % of children not accessing education due to the aggravating circumstance": "niveau de sévérité 4 -- enfants non scolarisés -- % d'enfants n'ayant pas accès à l'éducation en raison de la circonstance aggravante ",

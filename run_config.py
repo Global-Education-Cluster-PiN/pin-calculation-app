@@ -2,7 +2,7 @@
 # Pick the case to run with ACTIVE_CASE; add new countries/years as new keyed entries.
 # To run several cases in a row, list them in RUN_CASES and run run_all_cases.py.
 
-ACTIVE_CASE = "CAR_2026_fr"                         # single run
+ACTIVE_CASE = "LBN_MSNA_2026"                         # single run
 RUN_CASES = ["AFG_2026_no_ban", "AFG_2026_limited_ban", "AFG_2026_full_ban"]    # batch run (run_all_cases.py)
 ARCHIVE_INPUTS = True    # True: copy the Assessment dataset and the OCHA file into each successful run's archive zip; False: store only their checksums
 
@@ -291,12 +291,12 @@ CASES = {
         "no_ocha_data": False,
 
         # --- input files
-        "excel_data_path": "input/LBN/LBN_VaSYR_edu_data.xlsx",
-        "excel_path_ocha": "input/LBN/LBN_SYR_pop.xlsx",
+        "excel_data_path": "input/LBN/REACH_LBN_Dataset_MSNA_2026_edu.xlsx",
+        "excel_path_ocha": "input/LBN/LBN_MSNA_pop.xlsx",
         
         "sheets": {
-            "household": "main",
-            "edu": "edu_ind",
+            "household": "clean_main",
+            "edu": "clean_edu",
             "survey": "survey",
             "choices": "choices",
             "ocha": "ocha",
@@ -305,47 +305,41 @@ CASES = {
         "output_dir": "output_validation",
 
         # --- population-group mapping (page 2): values from your status column, None if the group is not present
-        "host_value": "vasyr",
+        "host_value": "lebanese",
         "idp_value": None,
-        "returnee_value": None,
-        "refugee_value": None,
-        "other_value": None,
+        "returnee_value": None ,
+        "refugee_value": "palestinian",
+        "other_value": "migrant",
 
         # --- Assessment variables
         "status_var": "pop_group",
-        "age_var": "ind_age",
-        "gender_var": "ind_gender",
+        "age_var": "edu_ind_age",
+        "gender_var": "edu_ind_gender",
         "access_var": "edu_access",
-        "teacher_disruption_var": "edu_disrupted_teachers",
+        "teacher_disruption_var": "edu_disrupted_teacher",
         "idp_disruption_var": "edu_disrupted_displaced",
         "natural_hazard_var": "edu_disrupted_hazards",
         "natural_hazard_var_sev": 4,
-        "armed_disruption_var": 'edu_disrupted_man_made',
-        "additional_last_var": "no_indicator",
-        "additional_last_sev": None,
+        "armed_disruption_var": 'edu_disrupted_attack',
+        "additional_last_var": "edu_disrupted_occupied_armed_forces",
+        "additional_last_sev": 4,
         "additional_2_last_var": "no_indicator",
         "additional_2_last_sev": None,
         "barrier_var": "edu_barrier",
 
         # --- barrier severity
-        "selected_severity_4_barriers": [
-            "h. Not attending due to marriage",
-            "a. another indicator"
-            "m. School closed due to emergency/conflict",
-            "n. School damaged or unsafe due to emergency/conflict",
-            "o. School being used as a shelter for displaced households",
-            "r. Safety concerns on the way to school due to emergency/conflict",
-            "s. Safety concerns for girls, including lack of safe transport, unsafe routes, or fear of harassment",
-            "u. Children need to stay at home to take care of the home and/or siblings",
-            "u. Children need to stay at home to take care of the home and/or siblings",
-            "v. Not attending due to fear of violence in school from school personnel",
-            "v. Not attending due to fear of violence in school from school personnel",
-            "w. Not attending due to fear of violence in school from other children",
-            "x. Fear of violence on the way to school",
-        ],
-        "selected_severity_5_barriers": [
-            "w. Lack of documentation",
-        ],
+        "selected_severity_4_barriers": ['The child needs to work at home or on the household’s farm without earning an income, including to allow other household members to undertake income-generating activities',
+                'The child is engaged in income-generating activities outside the home',
+                'The child faces protection risks at school',
+                'The child faces protection risks while travelling to or from school',
+                'The child is married or engaged',
+                'The school is closed due to damage, a natural disaster, or conflict',
+                'The child is experiencing discrimination or stigmatisation',
+                'A restriction or ban will prevent the child from attending school'],
+
+        "selected_severity_5_barriers": ['The child is associated with armed forces or armed groups',
+                'The child is pregnant',
+                'The child can not enrol due to a lack of documentation'],
     },
 
     "VaSYR_2026": {
