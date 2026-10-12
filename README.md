@@ -245,9 +245,10 @@ output_validation/  # Quality check outputs when the run_PiNcalculation_outside_
 **Outside-Streamlit Execution Files:**
 ```
 run_PiNcalculation_outside_streamlit.py        # Debug standard MSNA workflow
-run_PiNcalculation_outside_streamlit2.py       # Debug hybrid workflow
-run_PiNcalculation_outside_streamlit_EMIS.py   # Debug EMIS workflow
-run_PiNcalculation_outside_streamlit_JENA.py   # Debug JENA workflow
+run_PiNcalculation_outside_streamlit_EMIS.py   # Debug EMIS workflow (old, settings in the script)
+run_PiNcalculation_outside_streamlit_JENA.py   # Debug JENA workflow (old, settings in the script)
+run_PiNcalculation_outside_streamlit_EMIS_config.py   # EMIS workflow, case from run_config.py (e.g. LMR_2022_EMIS)
+run_PiNcalculation_outside_streamlit_JENA_config.py   # JENA workflow, case from run_config.py (e.g. NER_2024_JENA)
 ```
 
 These scripts allow developers to:
@@ -583,9 +584,9 @@ hybrid_scenario_countries = [
 
 1. **Choose the appropriate script** based on your scenario:
    - Standard: `run_PiNcalculation_outside_streamlit.py`
-   - Hybrid: `run_PiNcalculation_outside_streamlit2.py`
-   - JENA: `run_PiNcalculation_outside_streamlit_JENA.py`
-   - EMIS: `run_PiNcalculation_outside_streamlit_EMIS.py`
+   - Hybrid: `run_PiNcalculation_outside_streamlit.py` with `"hybrid_country": True` (step 1)
+   - JENA: `run_PiNcalculation_outside_streamlit_JENA_config.py` (case from `run_config.py`, e.g. `NER_2024_JENA`)
+   - EMIS: `run_PiNcalculation_outside_streamlit_EMIS_config.py` (case from `run_config.py`, e.g. `LMR_2022_EMIS`)
 
 2. **Modify file paths** in the script:
 ```python
