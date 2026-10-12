@@ -292,6 +292,23 @@ selected_country = st.selectbox(
 if selected_country != st.session_state.get('country'):
     st.session_state['country'] = selected_country
 
+# GEC compliance, shown only where a country rule exists: "GEC compliant" puts all out-of-school girls above 12 in
+# severity 5; "NOT GEC compliant" applies the standard rules. Preselected: GEC compliant. Other countries: False (no effect).
+# Kept under 'full_GEC_compliant' because Streamlit drops a widget's own key on other pages (local runs: run_config.py).
+if selected_country == 'Afghanistan -- AFG':
+    gec_options = [translations["gec_compliant"], translations["not_gec_compliant"]]
+    gec_choice = st.selectbox(
+        translations["gec_compliance_label"],
+        gec_options,
+        index=0 if st.session_state.get('gec_compliant_choice', True) else 1,   # the user's last choice for this country
+        help=translations["gec_compliance_help"],
+        key='full_GEC_compliant_select'
+    )
+    st.session_state['gec_compliant_choice'] = gec_choice == gec_options[0]
+    st.session_state['full_GEC_compliant'] = st.session_state['gec_compliant_choice']
+else:
+    st.session_state['full_GEC_compliant'] = False
+
 #------ Step 2: OCHA Data Upload
 st.subheader(translations["ocha_data_section"])
 no_ocha_data_checkbox = st.checkbox(f"**{translations['no_ocha_data']}**")

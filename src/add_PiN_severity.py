@@ -93,7 +93,7 @@ def calculate_severity(country, gender, age, access, barrier,
                        armed_disruption, natural_hazard, additional_ind,additional_2_ind,
                        natural_hazard_severity, additional_ind_severity,additional_2_ind_severity,
                        idp_disruption, teacher_disruption,
-                       names_severity_4, names_severity_5, full_GEC_compliant=True):
+                       names_severity_4, names_severity_5, full_GEC_compliant):
 
     # Helper function to safely normalize string inputs
     def normalize(input_value):
@@ -119,8 +119,55 @@ def calculate_severity(country, gender, age, access, barrier,
     yes_answers = ['yes', 'oui', 1, '1', '1. yes', '1. Yes']  # keep lenient
     no_answers  = ['no', 'non', 0, '0', '2. no', '2. No']
 
-    # full_GEC_compliant=False: Afghanistan also follows the standard rules (no girls >12 rule)
-    if country != 'Afghanistan -- AFG' or not full_GEC_compliant:
+    # full_GEC_compliant=True (GEC compliant): out-of-school girls above 12 are in severity 5
+    # full_GEC_compliant=False (not GEC compliant): standard rules, as for any other country
+    if country == 'Afghanistan -- AFG' and full_GEC_compliant:
+        if normalized_access in no_answers:
+            if barrier in names_severity_5:
+                return 5
+            elif normalized_gender == 'female' and (isinstance(normalized_age, (int, float)) and normalized_age > 12):
+                return 5
+            elif barrier in names_severity_4:
+                return 4
+            else:
+                return 3
+
+        elif normalized_access in yes_answers:
+            sev = 2
+
+            if (normalized_armed_disruption is not None) and (normalized_armed_disruption in yes_answers):
+                return 5
+
+            if normalized_idp_disruption in yes_answers:
+                sev = max(sev, 4)
+
+            if normalized_teacher_disruption in yes_answers:
+                sev = max(sev, 3)
+
+            if (normalized_natural_hazard is not None) and (normalized_natural_hazard in yes_answers):
+                if isinstance(natural_hazard_severity, int):
+                    sev = max(sev, natural_hazard_severity)
+                else:
+                    sev = max(sev, 3)
+
+            if (normalized_additional_ind is not None) and (normalized_additional_ind in yes_answers):
+                if isinstance(additional_ind_severity, int):
+                    sev = max(sev, additional_ind_severity)
+                else:
+                    sev = max(sev, 3)
+            # Additional indicator → use its configured severity (3 or 4)
+            if (normalized_additional_2_ind is not None) and (normalized_additional_2_ind in yes_answers):
+                if isinstance(additional_2_ind_severity, int):
+                    sev = max(sev, additional_2_ind_severity)
+                else:
+                    sev = max(sev, 3)  # conservative default             
+
+            return sev
+
+        return None  # Default fallback
+
+    else:
+        # Standard rules
         # Main severity calculation logic
         if normalized_access in no_answers:
             if barrier in names_severity_5:
@@ -170,51 +217,6 @@ def calculate_severity(country, gender, age, access, barrier,
 
         return None  # Default fallback
 
-    else:
-        # Afghanistan branch (same as yours, plus accumulator for access==yes)
-        if normalized_access in no_answers:
-            if barrier in names_severity_5:
-                return 5
-            elif normalized_gender == 'female' and (isinstance(normalized_age, (int, float)) and normalized_age > 12):
-                return 5
-            elif barrier in names_severity_4:
-                return 4
-            else:
-                return 3
-
-        elif normalized_access in yes_answers:
-            sev = 2
-
-            if (normalized_armed_disruption is not None) and (normalized_armed_disruption in yes_answers):
-                return 5
-
-            if normalized_idp_disruption in yes_answers:
-                sev = max(sev, 4)
-
-            if normalized_teacher_disruption in yes_answers:
-                sev = max(sev, 3)
-
-            if (normalized_natural_hazard is not None) and (normalized_natural_hazard in yes_answers):
-                if isinstance(natural_hazard_severity, int):
-                    sev = max(sev, natural_hazard_severity)
-                else:
-                    sev = max(sev, 3)
-
-            if (normalized_additional_ind is not None) and (normalized_additional_ind in yes_answers):
-                if isinstance(additional_ind_severity, int):
-                    sev = max(sev, additional_ind_severity)
-                else:
-                    sev = max(sev, 3)
-            # Additional indicator → use its configured severity (3 or 4)
-            if (normalized_additional_2_ind is not None) and (normalized_additional_2_ind in yes_answers):
-                if isinstance(additional_2_ind_severity, int):
-                    sev = max(sev, additional_2_ind_severity)
-                else:
-                    sev = max(sev, 3)  # conservative default             
-
-            return sev
-
-        return None  # Default fallback
 
 
 ##--------------------------------------------------------------------------------------------
@@ -584,7 +586,7 @@ def add_severity(country,
                 start_school,
                 status_var,
                 selected_language,
-                full_GEC_compliant=True):
+                full_GEC_compliant):
 
     admin_target = admin_var
     pop_group_var = status_var

@@ -131,7 +131,7 @@ def generate_parameters(st_session_state):
             "country": country,
             "date_calculation": datetime.now().strftime("%d/%m/%Y %H:%M"),
             "hybrid_country": st_session_state.get('hybrid_country', False),
-            "full_GEC_compliant": st_session_state.get('full_GEC_compliant', True),
+            "full_GEC_compliant": st_session_state['full_GEC_compliant'],
         },
         "msna_indicators_per_PiN_dimension": {
             "access": access_col,

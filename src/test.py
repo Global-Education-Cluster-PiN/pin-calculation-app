@@ -201,7 +201,8 @@ edu_data_severity = add_severity (country, edu_data, household_data, choice_data
                                                                                 age_var, gender_var,
                                                                                 label, 
                                                                                 admin_var, vector_cycle, start_school, status_var,
-                                                                                selected_language)
+                                                                                selected_language,
+                                                                                full_GEC_compliant=st.session_state['full_GEC_compliant'])
 
 
 

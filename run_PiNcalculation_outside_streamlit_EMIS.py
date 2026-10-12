@@ -50,6 +50,7 @@ age_var = 'ind_age'
 gender_var = 'ind_gender'
 start_school = 'September'
 country= 'Lemuria -- LMR'
+full_GEC_compliant = False  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
 
 #admin_var = 'Admin_3: Townships'#'Admin_2: Regions'
  
@@ -111,7 +112,8 @@ edu_data_severity = add_severity (country, edu_data, household_data, choice_data
                                                                                 age_var, gender_var,
                                                                                 label, 
                                                                                 admin_var, vector_cycle, start_school, status_var,
-                                                                                selected_language= selected_language)
+                                                                                selected_language= selected_language,
+                                                                                full_GEC_compliant=full_GEC_compliant)
 
 
 

@@ -183,5 +183,9 @@
     "confirm_mapping": "Confirm mapping",
     "mapping_error": "Please select at least the Host value and avoid duplicates.",
     "mapping_saved": "Mapping saved.",
-    "mapping_confirmed_status": "Population group mapping confirmed"
+    "mapping_confirmed_status": "Population group mapping confirmed",
+    "gec_compliance_label": "GEC compliance",
+    "gec_compliant": "GEC compliant",
+    "not_gec_compliant": "NOT GEC compliant",
+    "gec_compliance_help": "GEC compliant: all out-of-school girls above 12 are classified in severity 5. NOT GEC compliant: the standard rules apply (severity from the reason for not attending)."
   }

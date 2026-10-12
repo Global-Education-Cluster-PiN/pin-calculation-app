@@ -367,7 +367,8 @@ if not step_2_hpc and not alternative_country:
                                                                                     age_var, gender_var,
                                                                                     label, 
                                                                                     admin_var, vector_cycle, start_school, status_var,
-                                                                                    selected_language)
+                                                                                    selected_language,
+                                                                                    full_GEC_compliant=st.session_state['full_GEC_compliant'])
 
     if (drop_msg): 
         st.warning(drop_msg)   
@@ -821,7 +822,8 @@ if jena_country and ocha_data is not None:
                                                                                         age_var, gender_var,
                                                                                         label, 
                                                                                         admin_var, vector_cycle, start_school, status_var,
-                                                                                        selected_language)
+                                                                                        selected_language,
+                                                                                        full_GEC_compliant=st.session_state['full_GEC_compliant'])
 
         if (drop_msg): 
             st.warning(drop_msg)   
@@ -966,7 +968,8 @@ if emis_country and ocha_data is not None:
                                                                                         age_var, gender_var,
                                                                                         label, 
                                                                                         admin_var, vector_cycle, start_school, status_var,
-                                                                                        selected_language)
+                                                                                        selected_language,
+                                                                                        full_GEC_compliant=st.session_state['full_GEC_compliant'])
 
         if (drop_msg): 
             st.warning(drop_msg)   
