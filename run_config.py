@@ -1568,7 +1568,7 @@ CASES = {
     },
 
     "BFA_2025": {
-        # from run_PiNcalculation_outside_streamlit2.py lines 42-119 ("## BFA (run2)")
+        # from the former run_PiNcalculation_outside_streamlit2.py (deleted), "## BFA (run2)"
         # --- general
         "country": 'Burkina Faso -- BFA',
         "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
@@ -1599,7 +1599,7 @@ CASES = {
         "output_dir": "output_validation",
 
         # --- population-group mapping (page 2): values from your status column, None if the group is not present
-        "host_value": 'non_pdi',  # from run_PiNcalculation_outside_streamlit2.py line 190
+        "host_value": 'non_pdi',  # from the former run_PiNcalculation_outside_streamlit2.py
         "idp_value": 'pdi',
         "returnee_value": None,
         "refugee_value": None,
@@ -1634,4 +1634,52 @@ CASES = {
             "Une interdiction empêche l'enfant d'aller à l'école",
         ],
     },
+}
+
+
+# --- JENA and EMIS countries: cases for run_PiNcalculation_outside_streamlit_JENA_config.py / _EMIS_config.py.
+# Derived from NER_2024 and LMR_2022 with the settings of the old run_PiNcalculation_outside_streamlit_JENA.py / _EMIS.py
+# (kept for reference). Extra keys, as on page 1 of the platform:
+#   "data_combination": JENA when 'mjjm'; EMIS when 'emmm', 'eemm' or 'eeem'
+#   "excel_path_other": the JENA or EMIS file, read from the sheet "sheets"["other"] (page 1 reads 'indicator';
+#                       the old scripts read the first sheet)
+# TODO: fill in the population-group mapping (host_value, ...) before running: the old scripts predate it.
+CASES["NER_2024_JENA"] = {
+    **CASES["NER_2024"],
+    "data_combination": 'mjjm',
+    "excel_path_other": 'input/Niger_JENA_PTR_protection.xlsx',
+    "sheets": {**CASES["NER_2024"]["sheets"], "other": 'indicator'},
+    "status_var": 'd_statut_deplacement',
+    "access_var": 'edu_access',
+    "teacher_disruption_var": 'edu_disrupted_teacher',
+    "idp_disruption_var": 'edu_disrupted_displaced',
+    "armed_disruption_var": 'edu_disrupted_occupation',
+    "natural_hazard_var": 'no_indicator',
+    "natural_hazard_var_sev": None,
+    "additional_last_var": 'no_indicator',
+    "additional_last_sev": None,
+    "additional_2_last_var": 'no_indicator',
+    "additional_2_last_sev": None,
+    "barrier_var": 'edu_barrier',
+    "age_var": 'ind_age',
+    "gender_var": 'ind_gender',
+    "selected_severity_4_barriers": [
+        "L'école a été fermée en raison de dommages, d'une catastrophe naturelle ou d'un conflit.",
+        "Mariage, fiançailles et/ou grossesse",
+        "Risques de protection à l'école",
+        "Risques de protection pendant le trajet vers l'école",
+        "L'enfant doit travailler à la maison ou dans la ferme du ménage (c'est-à-dire qu'il ne gagne pas de revenu pour ces activités, mais peut permettre à d'autres membres de la famille de gagner un revenu)",
+        "L'enfant participe à des activités génératrices de revenus en dehors du foyer",
+    ],
+    "selected_severity_5_barriers": [
+        "L'enfant est associé à des forces armées ou à des groupes armés",
+    ],
+}
+
+CASES["LMR_2022_EMIS"] = {
+    **CASES["LMR_2022"],
+    "data_combination": 'eemm',
+    "excel_path_other": 'input/emis_LMR_eemm.xlsx',
+    "no_ocha_data": False,     # EMIS needs the OCHA figures (LMR_2022 runs without them)
+    "sheets": {**CASES["LMR_2022"]["sheets"], "ocha": 'ocha', "other": 'indicator'},
 }
