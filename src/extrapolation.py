@@ -17,6 +17,7 @@ stable_cols = [
         "Education needs stable (tick 'X' if no change from last year)",
         "Les besoins en matière d'éducation sont stables (cochez « X » si aucun changement par rapport à l'année dernière)"
     ]
+pct_2025_cols = ['% severity levels 1-2', '% severity level 3', '% severity level 4', '% severity level 5']
 delta_cols = [
         "Education needs decreased (tick 'X' if improved from last year)",
         "Les besoins en matière d'éducation ont diminué (cochez « X » si la situation s'est améliorée par rapport à l'année dernière)",
@@ -26,6 +27,42 @@ delta_cols = [
 
 
 
+## --------------------------------------------------------------------------------------------------------------
+def has_2025_data(df):
+    """Per row: True if the area has 2025 MSNA results, i.e. its % by severity add up to more than 0 (100 when
+    covered). Areas without MSNA data come as empty cells or, in step 1 files made before this check, as 0."""
+    cols = [col for col in pct_2025_cols if col in df.columns]
+    if not cols:
+        return pd.Series(True, index=df.index)
+    return df[cols].apply(pd.to_numeric, errors='coerce').fillna(0).sum(axis=1) > 0
+## --------------------------------------------------------------------------------------------------------------
+def match_pin2024_sheets(pin2025_by_status, pin2024_cat):
+    """Name the 2024 sheets as the population groups of the step 1 file, ignoring case and spaces ('IDP' = 'idp').
+    2024 sheets without a step 1 group keep their name."""
+    def key(name):
+        return str(name).strip().lower().replace(" ", "")
+    by_key = {key(name): name for name in pin2024_cat}
+    matched = {}
+    for category in pin2025_by_status:
+        name_2024 = by_key.get(key(category))
+        if name_2024 is not None:
+            matched[category] = pin2024_cat[name_2024]
+    used = {by_key[key(category)] for category in matched}
+    matched.update({name: df for name, df in pin2024_cat.items() if name not in used and name not in matched})
+    return matched
+## --------------------------------------------------------------------------------------------------------------
+NOTE_TEXT = {
+    "English": {
+        "no_reference": "no reference area with 2025 data: 2024 values kept (needs considered stable)",
+        "no_reference_data": "the reference area {ref} has no usable 2024 and 2025 data: 2024 values kept (needs considered stable)",
+        "no_2024": "no 2024 PiN for this area: not extrapolated, the area is left out",
+    },
+    "French": {
+        "no_reference": "aucune zone de référence avec des données 2025 : valeurs 2024 conservées (besoins considérés stables)",
+        "no_reference_data": "la zone de référence {ref} n'a pas de données 2024 et 2025 utilisables : valeurs 2024 conservées (besoins considérés stables)",
+        "no_2024": "pas de PiN 2024 pour cette zone : non extrapolée, la zone n'est pas incluse",
+    },
+}
 ## --------------------------------------------------------------------------------------------------------------
 def find_valid_ref(row, valid_list):
     for candidate in [
@@ -50,9 +87,18 @@ def find_valid_ref(row, valid_list):
 
 ############################################################################################################
 
-def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat):
-    
+def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat, notes=None, selected_language='English'):
+    # notes: optional list; one row is added (population group, area, reference area, note) for each area that could
+    # not be extrapolated as asked, to be shown to the user and in the PiN results
+
     print(base_2025.columns)
+    note_text = NOTE_TEXT.get(selected_language, NOTE_TEXT["English"])
+    def add_note(category, admin, ref, key):
+        if notes is not None:
+            notes.append({"Population group": category, "Admin Pcode": admin, "Reference area": ref or "",
+                          "Note": note_text[key].format(ref=ref)})
+
+    pin2024_cat = match_pin2024_sheets(pin2025_by_status, pin2024_cat)
 
     # 1. ---- create lists: list_remove, list_2025, list_delta, list_same,
     #        - list_remove = list of admins where the values of the columns containing 'severity' is: 'Missing MSNA data for 2024 AND 2025'
@@ -81,6 +127,8 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat):
             continue
         first_col = df_2025.columns[0]
         df_2025 = df_2025.rename(columns={first_col: "Admin Pcode"})
+        # covered (and valid reference areas): only the areas with 2025 MSNA results in this population group
+        df_2025 = df_2025[has_2025_data(df_2025)]
         list_2025_cat = df_2025["Admin Pcode"].dropna().unique().tolist()
         list_2025_category[category] = {"list_2025": list_2025_cat}
 
@@ -106,8 +154,9 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat):
 
     # Columns
     severity_cols = [col for col in base_2025.columns if 'severity' in col]
-    
-    for _, row in base_2025.iterrows():
+    with_2025_data = has_2025_data(base_2025)
+
+    for idx, row in base_2025.iterrows():
         admin_pcode = row[admin_var]
 
         # (1) Remove if ALL severity cols contain missing string
@@ -116,8 +165,8 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat):
             continue  # Skip further checks
 
     
-        # (3) Check 'same' if all severity_2025_cols are empty
-        if all(pd.isna(row[col]) or str(row[col]).strip() == '' for col in severity_2025_cols):
+        # (3) Check 'same' if the area has no 2025 MSNA results (empty, or 0 in older step 1 files)
+        if not with_2025_data[idx]:
             for col in stable_cols:
                 if col in row and str(row[col]).strip().lower() == 'x':
                     list_same.append(admin_pcode)
@@ -215,9 +264,8 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat):
         # Assign admin_ref using the category-specific list_2025
         df_delta['admin_ref'] = df_delta.apply(lambda row: find_valid_ref(row, valid_refs), axis=1)
 
-        # Track non-matched refs to fall back to list_same
-        no_match_admins = df_delta[df_delta['admin_ref'] == ''][admin_var].tolist()
-        list_same.extend(no_match_admins)
+        # areas without a valid reference in this population group keep their 2024 values (step 5); they are no longer
+        # added to the shared list_same, which applied to every population group and duplicated the area
 
         # Drop reference suggestion columns (cleanup)
         df_delta.drop(columns=[ref_user_admin, ref_suggested_admin, ref_suggested_other], inplace=True)
@@ -245,6 +293,9 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat):
         df_2025 = df_2025.rename(columns={first_col_2025: "Admin Pcode REF"})
 
         # Clean and prepare 2024 data
+        if category not in pin2024_cat:
+            raise ValueError(f"No sheet for the population group '{category}' in the 2024 PiN file "
+                             f"(sheets: {', '.join(map(str, pin2024_cat))}). Rename the sheet of the step 1 file or of the 2024 file.")
         df_2024 = pin2024_cat[category]
         first_col_2024 = df_2024.columns[0]
         df_2024 = df_2024.rename(columns={first_col_2024: "Admin Pcode REF"})
@@ -303,6 +354,10 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat):
     ## 4. ---- merging the delta and the pin2024 of refernce  
     for category, df in merged_df_delta_all.items():
         df_sev24 = pin_2024_missing_2025.get(category)
+        with_2024 = set(df_sev24["Admin_Pcode_2024"]) if df_sev24 is not None and not df_sev24.empty else set()
+        for admin in df["Admin Pcode"]:
+            if admin not in with_2024:
+                add_note(category, admin, None, "no_2024")
         if df_sev24 is not None and not df_sev24.empty:
             df_merged = df.merge(
                 df_sev24,
@@ -330,10 +385,17 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat):
 
         # Normalize so that the sum of new extrapolated columns = 100
         if new_cols:
-            sum_col = df[new_cols].sum(axis=1)
+            sum_col = df[new_cols].sum(axis=1, min_count=len(new_cols))   # empty if a level could not be extrapolated
+            # no usable reference (none valid, or without 2024/2025 data): keep the area's 2024 values (needs stable)
+            no_ref = ~(sum_col > 0)
             for col in new_cols:
                 norm_col = col.replace("new_", "new_normalized_")
-                df[norm_col] = df[col] / sum_col * 100
+                base_col = col[len("new_"):].replace("_extrapolated", "_2024_extrapolation_base")
+                df[norm_col] = df[col] / sum_col.where(~no_ref) * 100
+                df.loc[no_ref, norm_col] = df.loc[no_ref, base_col]
+            for _, row in df[no_ref].iterrows():
+                ref = row.get("admin_ref")
+                add_note(category, row["Admin Pcode"], ref, "no_reference_data" if isinstance(ref, str) and ref else "no_reference")
 
         # Select only first column + last 4 normalized severity columns
         first_col = df.columns[0]

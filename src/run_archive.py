@@ -2,6 +2,7 @@
 # A successful run stores everything; a failed run stores only what helps to debug it (log, settings, code version,
 # input checksums and the list of files written before the failure).
 import datetime
+import glob
 import hashlib
 import importlib.metadata
 import json
@@ -79,8 +80,14 @@ def make_run_archive(case, cfg, status, started, finished, log_path=None, archiv
         "files_written_before_failure": [],
         "results_folder_not_updated_by_this_run": [],
     }
-    for role, key in (("msna", "excel_data_path"), ("ocha", "excel_path_ocha")):
+    # hybrid step 2 reads the two step 1 files instead of the MSNA
+    roles = (("ocha", "excel_path_ocha"), ("updated_pin", "updated_pin_path"), ("covered_pin", "covered_pin_path")) \
+        if cfg.get("step_2_hpc", False) else (("msna", "excel_data_path"), ("ocha", "excel_path_ocha"))
+    for role, key in roles:
         path = cfg.get(key)
+        if path and "*" in path:   # step 2 inputs given as a pattern: the newest matching file, as the run used
+            matches = glob.glob(path)
+            path = max(matches, key=os.path.getmtime) if matches else path
         manifest["inputs"][role] = file_info(path) if path and os.path.exists(path) else {"path": path, "missing": True}
 
     with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as z:
@@ -93,7 +100,7 @@ def make_run_archive(case, cfg, status, started, finished, log_path=None, archiv
 
         if status == "success":
             if archive_inputs:
-                for role in ("msna", "ocha"):
+                for role in manifest["inputs"]:
                     if not manifest["inputs"][role].get("missing"):
                         z.write(manifest["inputs"][role]["path"], f"inputs/{role}/" + os.path.basename(manifest["inputs"][role]["path"]))
             for path in written:

@@ -11,6 +11,8 @@ from src.calculation_for_PiN_Dimension import calculatePIN
 from src.calculation_for_PiN_Dimension_NO_OCHA import calculatePIN_NO_OCHA
 from src.calculation_for_PiN_Dimension_NO_OCHA_2025 import calculatePIN_NO_OCHA_2025
 from src.vizualize_PiN import create_output
+from src.vizualize_PiN import parameters_to_df
+from src.output_names import output_name, name_stamp, map_content
 from src.vizualize_PiN import create_indicator_output
 from src.vizualize_PiN import create_indicator_output_no_ocha
 from src.vizualize_PiN import create_pin_raw_output
@@ -65,7 +67,12 @@ if 'uploaded_data' not in st.session_state and 'uploaded_other_data' not in st.s
 
 
 github_token = st.secrets["github"]["token"]
-timestamp = datetime.now().strftime("%m%d_%I%p")
+timestamp = datetime.now().strftime("%m%d_%I%p")   # copies saved in GitHub (platform_PiN_output/...)
+files_stamp = name_stamp()                          # names of the downloaded files, see src/output_names.py
+
+def out_name(content, ext):
+    """e.g. SOM_PiN2026_results_20261011-1745.xlsx (`country` is set further down, before any download)"""
+    return output_name(country, content, ext, files_stamp)
 
 
 ###########################################################################################################
@@ -102,15 +109,12 @@ def upload_to_github(file_content, file_name, repo_name, branch_name, commit_mes
 def create_zip_file(country_label, excel_file,indicator_output,word_snapshot, word_parameters, maps):
     zip_buffer = BytesIO()  # Create an in-memory ZIP file
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        # Add the Excel file with timestamp
-        zip_file.writestr(f"PiN_results_{country_label}_{timestamp}.xlsx", excel_file.getvalue())
-        zip_file.writestr(f"PiN_by_indicator_{country_label}_{timestamp}.xlsx", indicator_output.getvalue())
-        # Add the Word Snapshot with timestamp
-        zip_file.writestr(f"PiN_snapshot_{country_label}_{timestamp}.docx", word_snapshot.getvalue())
-        # Add the Parameters Word Document with timestamp
-        zip_file.writestr(f"Parameters_Input_Document_{timestamp}.docx", word_parameters.getvalue())
+        zip_file.writestr(out_name("results", "xlsx"), excel_file.getvalue())
+        zip_file.writestr(out_name("by-indicator", "xlsx"), indicator_output.getvalue())
+        zip_file.writestr(out_name("snapshot", "docx"), word_snapshot.getvalue())
+        zip_file.writestr(out_name("parameters", "docx"), word_parameters.getvalue())
         for field, buf in maps.items():
-            filename = f"{country_label}_{field.replace(' ', '_')}.png"
+            filename = out_name(map_content(field), "png")
             zip_file.writestr(filename, buf.getvalue())
 
     zip_buffer.seek(0)  # Reset the buffer to the beginning
@@ -119,15 +123,11 @@ def create_zip_file(country_label, excel_file,indicator_output,word_snapshot, wo
 def create_zip_file_FR(country_label, excel_file,indicator_output, word_parameters, maps):
     zip_buffer = BytesIO()  # Create an in-memory ZIP file
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        # Add the Excel file with timestamp
-        zip_file.writestr(f"PiN_results_{country_label}_{timestamp}.xlsx", excel_file.getvalue())
-        zip_file.writestr(f"PiN_by_indicator_{country_label}_{timestamp}.xlsx", indicator_output.getvalue())
-        # Add the Word Snapshot with timestamp
-        #zip_file.writestr(f"PiN_snapshot_{country_label}_{timestamp}.docx", word_snapshot.getvalue())
-        # Add the Parameters Word Document with timestamp
-        zip_file.writestr(f"Parameters_Input_Document_{timestamp}.docx", word_parameters.getvalue())
+        zip_file.writestr(out_name("results", "xlsx"), excel_file.getvalue())
+        zip_file.writestr(out_name("by-indicator", "xlsx"), indicator_output.getvalue())
+        zip_file.writestr(out_name("parameters", "docx"), word_parameters.getvalue())
         for field, buf in maps.items():
-            filename = f"{country_label}_{field.replace(' ', '_')}.png"
+            filename = out_name(map_content(field), "png")
             zip_file.writestr(filename, buf.getvalue())
     zip_buffer.seek(0)  # Reset the buffer to the beginning
     return zip_buffer
@@ -135,25 +135,18 @@ def create_zip_file_FR(country_label, excel_file,indicator_output, word_paramete
 def create_zip_file_step1_hybrid(country_label, formatted_output_1_2025, raw_excel,word_snapshot, doc_parameter_output,indicator_output, maps=None, timestamp=None):
     zip_buffer = BytesIO()  # Create an in-memory ZIP file
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        # Add the Excel file with timestamp
-        zip_file.writestr(f"PiN_temporary_to_fill_{country_label}_{timestamp}.xlsx",
-                          formatted_output_1_2025.getvalue())
-        zip_file.writestr(f"PiN_by_indicator_{country_label}_{timestamp}.xlsx", indicator_output.getvalue())
-
-        # Add the raw Excel file
-        zip_file.writestr(f"{country_label}_PiN_targeted_MSNA_2025_{timestamp}.xlsx",
-                          raw_excel.getvalue())
-        # Add the Word Snapshot with timestamp
-        zip_file.writestr(f"PiN_snapshot_{country_label}_{timestamp}.docx", word_snapshot.getvalue())
-        # Add the Parameters Word Document
-        zip_file.writestr(f"Parameters_Input_Document_{timestamp}.docx",
-                          doc_parameter_output.getvalue())
+        # the file to fill and the PiN of the areas covered by the MSNA: the two files to upload for step 2
+        zip_file.writestr(out_name("step1_to-fill", "xlsx"), formatted_output_1_2025.getvalue())
+        zip_file.writestr(out_name("step1_covered-areas", "xlsx"), raw_excel.getvalue())
+        zip_file.writestr(out_name("step1_by-indicator", "xlsx"), indicator_output.getvalue())
+        zip_file.writestr(out_name("step1_snapshot", "docx"), word_snapshot.getvalue())
+        zip_file.writestr(out_name("step1_parameters", "docx"), doc_parameter_output.getvalue())
 
         # Only add maps if provided and not empty
         if maps:
             for field, buf in maps.items():
                 if buf:  # Make sure buf is not None
-                    filename = f"{country_label}_{field.replace(' ', '_')}.png"
+                    filename = out_name(map_content(field, "step1_"), "png")
                     zip_file.writestr(filename, buf.getvalue())
 
     zip_buffer.seek(0)  # Reset the buffer to the beginning
@@ -162,12 +155,10 @@ def create_zip_file_step1_hybrid(country_label, formatted_output_1_2025, raw_exc
 def create_zip_file_step2_hybrid(country_label, excel_file, word_snapshot, maps):
     zip_buffer = BytesIO()  # Create an in-memory ZIP file
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        # Add the Excel file with timestamp
-        zip_file.writestr(f"PiN_results_{country_label}_{timestamp}.xlsx", excel_file.getvalue())
-        # Add the Word Snapshot with timestamp
-        zip_file.writestr(f"PiN_snapshot_{country_label}_{timestamp}.docx", word_snapshot.getvalue())
+        zip_file.writestr(out_name("step2_results", "xlsx"), excel_file.getvalue())
+        zip_file.writestr(out_name("step2_snapshot", "docx"), word_snapshot.getvalue())
         for field, buf in maps.items():
-            filename = f"{country_label}_{field.replace(' ', '_')}.png"
+            filename = out_name(map_content(field, "step2_"), "png")
             zip_file.writestr(filename, buf.getvalue())
 
     zip_buffer.seek(0)  # Reset the buffer to the beginning
@@ -177,11 +168,9 @@ def create_zip_file_step2_hybrid(country_label, excel_file, word_snapshot, maps)
 def create_zip_file_no_ocha(country_label, pin_percentage, indicator_output,word_parameters):
     zip_buffer = BytesIO()  # Create an in-memory ZIP file
     with zipfile.ZipFile(zip_buffer, "w") as zip_file:
-        zip_file.writestr(f"PiN_percentage_{country_label}_{timestamp}.xlsx", pin_percentage.getvalue())
-        # Add the Excel file with timestamp
-        zip_file.writestr(f"PiN_by_indicator_{country_label}_{timestamp}.xlsx", indicator_output.getvalue())
-        # Add the Parameters Word Document with timestamp
-        zip_file.writestr(f"Parameters_Input_Document_{timestamp}.docx", word_parameters.getvalue())
+        zip_file.writestr(out_name("percentage", "xlsx"), pin_percentage.getvalue())
+        zip_file.writestr(out_name("by-indicator", "xlsx"), indicator_output.getvalue())
+        zip_file.writestr(out_name("parameters", "docx"), word_parameters.getvalue())
     zip_buffer.seek(0)  # Reset the buffer to the beginning
     return zip_buffer
 
@@ -294,19 +283,9 @@ no_ocha_data = st.session_state.get('no_upload_ocha_data', False)
 mismatch_admin = st.session_state.get('mismatch_admin', False)
 
 
-hybrid_scenario_countries = [
-    'Central African Republic -- CAR',
-    'Ethiopia -- ETH',
-    'Democratic Republic of the Congo -- DRC',
-    #'Mali -- MLI',
-    # 'Lebanon -- LBN',
-    'Somalia -- SOM',
-    'South Sudan -- SSD'
-]
-
-hybrid_country= False
-if country in hybrid_scenario_countries: hybrid_country= True
-st.session_state['hybrid_country'] = hybrid_country   # recorded in the "Parameters Used" sheet and the parameters Word file
+# hybrid country: ticked on page 1 (local runs: "hybrid_country" in run_config.py); recorded in the "Parameters Used"
+# sheet and the parameters Word file
+hybrid_country = st.session_state.get('hybrid_country', False)
 
 parameters = generate_parameters(st.session_state)
 parameters_FR = generate_parameters_FR(st.session_state)
@@ -464,7 +443,7 @@ if ocha_data is not None and not step_2_hpc and not alternative_country and not 
 
 
     # ------------------------ D. create Zip file with all important documents
-    zip_file_name = f"PiN_Documents_{country_label}_{timestamp}.zip"
+    zip_file_name = out_name("documents", "zip")
 
     if selected_language == "English":
         zip_file = create_zip_file(country_label, ocha_excel,indicator_output, doc_output, doc_parameter_output, maps)
@@ -554,10 +533,12 @@ if ocha_data is not None and not step_2_hpc and not alternative_country and hybr
     #st.dataframe(output_1_2025) 
     ## format with color and headers the output_1_2025
     formatted_output_1_2025 = create_output1_user(output_1_2025)
-    output1_file_name = f"PiN_temporary_to_fill_{country_label}_{timestamp}.xlsx"
-    pin_by_status_file_name = f"{country_label}_PiN_targeted_MSNA_2025_{timestamp}.xlsx"
+    output1_file_name = out_name("step1_to-fill", "xlsx")
+    pin_by_status_file_name = out_name("step1_covered-areas", "xlsx")
 
-    raw_excel = dict_of_dfs_to_bytesio_excel(Tot_PiN_JIAF)
+    # the step 1 parameters travel in this file to step 2, which skips page 2 (see page 1, step 2 upload)
+    step1_parameters_df, step1_parameters_sheet = parameters_to_df(parameters_FR if selected_language == "French" else parameters, selected_language)
+    raw_excel = dict_of_dfs_to_bytesio_excel({**Tot_PiN_JIAF, step1_parameters_sheet: step1_parameters_df})
 
    # ------------------------ C. create word PiN snapshot
     if selected_language == "English":
@@ -575,7 +556,7 @@ if ocha_data is not None and not step_2_hpc and not alternative_country and hybr
 
 
     # ------------------------ D. create Zip file with all important documents
-    zip_file_name = f"PiN_Temporary_{country_label}_{timestamp}.zip"
+    zip_file_name = out_name("step1_documents", "zip")
 
     if selected_language == "English":
         zip_file = create_zip_file_step1_hybrid(country_label,formatted_output_1_2025, raw_excel,doc_output,  doc_parameter_output,indicator_output, maps_1step, timestamp)
@@ -698,7 +679,12 @@ if step_2_hpc and hybrid_country:
 
 
     ## extrapolate using the delta method
-    (merged_df_delta_all,pin_2025_updated) = extrapolate_df_2025_updated(updated_2025_pin_file, uploaded_covered_2025_pin, pin2024_cat)
+    extrapolation_notes = []   # areas that could not be extrapolated as asked: shown here and in the PiN results
+    (merged_df_delta_all,pin_2025_updated) = extrapolate_df_2025_updated(updated_2025_pin_file, uploaded_covered_2025_pin, pin2024_cat,
+                                                                         notes=extrapolation_notes, selected_language=selected_language)
+    if extrapolation_notes:
+        st.warning(translations.get("extrapolation_notes_warning", "{n} area(s) could not be extrapolated as asked: see the 'Extrapolation notes' sheet of the PiN results.").format(n=len(extrapolation_notes)))
+        st.dataframe(pd.DataFrame(extrapolation_notes), hide_index=True)
 
     ## put together and recalculate the pin BY SEVERITY ONLY
     (Tot_PiN_JIAF,Tot_PiN_by_admin,final_overview_df_OCHA,final_overview_df, pin_per_admin_status) = UPDATE_calculatePIN (country , pin_2025_updated, ocha_data ,label, selected_language )
@@ -710,13 +696,13 @@ if step_2_hpc and hybrid_country:
 
     label_total_pin_sheet = "PiN TOTAL"
 
-    ## here --> fix creation output to not have parameters
+    ## "Parameters Used" sheet: the step 1 parameters, read from the uploaded step 1 file on page 1 (none for older files)
 
     # ------------------------ A. create excel PiN classic file
     if selected_language == "French":
-        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language, ocha_data=ocha_data)
+        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language, ocha_data=ocha_data, parameters_df=st.session_state.get('step1_parameters_df'), notes=extrapolation_notes)
     else:
-        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language, ocha_data=ocha_data)
+        ocha_excel = create_output(country_label,Tot_PiN_JIAF,final_overview_df,final_overview_df_OCHA,label_total_pin_sheet,admin_var,ocha=True,tot_severity=Tot_PiN_by_admin,selected_language=selected_language, ocha_data=ocha_data, parameters_df=st.session_state.get('step1_parameters_df'), notes=extrapolation_notes)
 
     if selected_language == "English":
         doc_output = create_snapshot_PiN(country_label, final_overview_df, final_overview_df_OCHA, selected_language=selected_language)
@@ -731,7 +717,7 @@ if step_2_hpc and hybrid_country:
 
 
     # ------------------------ D. create Zip file with all important documents
-    zip_file_name = f"PiN_Documents_{country_label}_{timestamp}.zip"
+    zip_file_name = out_name("step2_documents", "zip")
 
     if selected_language == "English":
         zip_file = create_zip_file_step2_hybrid(country_label, ocha_excel, doc_output, maps_2step)
@@ -879,7 +865,7 @@ if jena_country and ocha_data is not None:
 
 
     # ------------------------ D. create Zip file with all important documents
-    zip_file_name_jena = f"PiN_Documents_{country_label}_{timestamp}.zip"
+    zip_file_name_jena = out_name("documents", "zip")
 
     if selected_language == "English":
         zip_file_jena = create_zip_file_step2_hybrid(country_label, ocha_excel, doc_output, maps_jena)
@@ -1026,7 +1012,7 @@ if emis_country and ocha_data is not None:
 
 
     # ------------------------ D. create Zip file with all important documents
-    zip_file_name_emis = f"PiN_Documents_{country_label}_{timestamp}.zip"
+    zip_file_name_emis = out_name("documents", "zip")
 
     if selected_language == "English":
         zip_file_emis = create_zip_file_step2_hybrid(country_label, ocha_excel, doc_output, maps_emis)
@@ -1104,7 +1090,7 @@ if no_ocha_data:
     if selected_language == "French":
         doc_parameter_output = generate_word_document_FR(parameters_FR)
 
-    zip_file_name = f"PiN_by_indicator_Documents_{country_label}_{datetime.now().strftime('%Y%m%d_%H%M')}.zip"
+    zip_file_name = out_name("documents", "zip")
     zip_file = create_zip_file_no_ocha(country_label, pin_percentage_output, indicator_output,  doc_parameter_output)
 
     

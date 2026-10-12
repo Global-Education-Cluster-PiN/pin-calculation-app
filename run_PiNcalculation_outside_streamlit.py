@@ -12,6 +12,7 @@ from src.calculation_for_PiN_Dimension import calculatePIN
 from src.calculation_for_PiN_Dimension_NO_OCHA import calculatePIN_NO_OCHA
 from src.calculation_for_PiN_Dimension_NO_OCHA_2025 import calculatePIN_NO_OCHA_2025
 from src.vizualize_PiN import create_output
+from src.vizualize_PiN import parameters_to_df
 from src.vizualize_PiN import create_indicator_output
 from src.vizualize_PiN import create_indicator_output_no_ocha
 from src.vizualize_PiN import create_pin_raw_output
@@ -23,6 +24,10 @@ from src.save_parameter_FR import generate_word_document_FR
 from src.save_parameter_FR import generate_parameters_FR
 from src.create_map_severity import make_map_severity
 from src.clean_dataset import clean_make_dataset
+from src.make_output1_platform import merge_2025_contextDB
+from src.create_output1_excel import create_output1_user
+from src.local_parameters import case_parameters
+from src.output_names import output_name, name_stamp, map_content
 
 from docx import Document
 from docx.shared import Pt, RGBColor
@@ -37,6 +42,8 @@ from run_config import CASES, ACTIVE_CASE
 
 ACTIVE_CASE = os.environ.get("PIN_CASE") or ACTIVE_CASE   # run_all_cases.py chooses the case through PIN_CASE
 cfg = CASES[ACTIVE_CASE]
+if cfg.get("step_2_hpc", False):
+    raise ValueError(f"{ACTIVE_CASE} has step_2_hpc = True: run run_hybrid_step2.py (or run_all_cases.py) for hybrid step 2")
 import time
 run_started = time.time()   # used to archive only the files written by this run
 
@@ -54,9 +61,8 @@ barrier_var, age_var, gender_var = cfg["barrier_var"], cfg["age_var"], cfg["gend
 selected_severity_4_barriers = cfg["selected_severity_4_barriers"]
 selected_severity_5_barriers = cfg["selected_severity_5_barriers"]
 single_cycle = (vector_cycle[1] == 0)
-# TODO: add later — primary_start, secondary_end, step_2_hpc are commented out in run_config.py (not used yet)
+# TODO: add later — primary_start, secondary_end are commented out in run_config.py (not used yet)
 # primary_start, secondary_end = cfg["primary_start"], cfg["secondary_end"]
-# step_2_hpc = cfg["step_2_hpc"]
 host_value, idp_value, returnee_value = cfg["host_value"], cfg["idp_value"], cfg["returnee_value"]
 refugee_value, other_value = cfg["refugee_value"], cfg["other_value"]
 if all(v is None for v in (host_value, idp_value, returnee_value, refugee_value, other_value)):
@@ -65,6 +71,14 @@ sheets = cfg["sheets"]
 country_code = country.split("--")[-1].strip()
 out_dir = os.path.join(cfg["output_dir"], country_code, ACTIVE_CASE)   # one folder per case, so variants don't overwrite each other
 os.makedirs(out_dir, exist_ok=True)
+# result files: same names as the platform downloads, with the run time (src/output_names.py); hybrid step 1 files start with step1_
+files_stamp = name_stamp()
+step_prefix = "step1_" if hybrid_country else ""
+def out_name(content, ext):
+    return os.path.join(out_dir, output_name(country, content, ext, files_stamp))
+# intermediate check files (00_..., 01_...): one folder per run, e.g. checks_20261011-1745
+check_dir = os.path.join(out_dir, f"checks_{files_stamp}")
+os.makedirs(check_dir, exist_ok=True)
 
 # --- checkpoints: save the slow steps once they finish and reuse them while their inputs are unchanged
 import hashlib, pickle
@@ -147,8 +161,8 @@ status_var =  "pop_status_group"
 age_var = "ind_age"
 gender_var =  "ind_gender"
 barrier_var = "edu_barrier_final"
-file_path000 = os.path.join(out_dir, '000_edu_data.xlsx')
-file_path000h = os.path.join(out_dir, '000_hh.xlsx')
+file_path000 = os.path.join(check_dir, '000_edu_data.xlsx')
+file_path000h = os.path.join(check_dir, '000_hh.xlsx')
 
 # Save the DataFrame to an Excel file
 edu_data1.to_excel(file_path000, index=False, engine='openpyxl')
@@ -178,34 +192,14 @@ edu_data_severity, drop_msg = load_or_compute("03_severity", key_severity, run_s
 if drop_msg:
     print(drop_msg)
 
-file_path = os.path.join(out_dir, '00_edu_data_with_severity.xlsx')
+file_path = os.path.join(check_dir, '00_edu_data_with_severity.xlsx')
 # Save the DataFrame to an Excel file
 edu_data_severity.to_excel(file_path, index=False, engine='openpyxl')
 
 
 # Parameters used, as on the platform: "Parameters Used" sheet of the PiN results and Parameters_Input_Document.docx.
-# generate_parameters reads the Streamlit session-state names; some of them are named differently in run_config.py.
-param_state = {
-    **cfg,
-    "selected_disruption_natural_hazard_column": natural_hazard_var,
-    "natural_hazard_disruption_severity": natural_hazard_var_sev,
-    "additional_indicator_last_var": additional_last_var,
-    "additional_indicator_last_severity": additional_last_sev,
-    "additional_2_indicator_last_var": additional_2_last_var,
-    "additional_2_indicator_last_severity": additional_2_last_sev,
-    # generate_parameters_FR lists the additional indicators only when these switches are on (set by page 2)
-    "additional_indicator_enable": bool(additional_last_var) and additional_last_var != "no_indicator",
-    "additional_2_indicator_enable": bool(additional_2_last_var) and additional_2_last_var != "no_indicator",
-    "pop_group_value_map": {"status_column": cfg["status_var"], "host": cfg["host_value"], "idp": cfg["idp_value"],
-                            "returnee": cfg["returnee_value"], "refugee": cfg["refugee_value"], "other": cfg["other_value"]},
-}
-if selected_language == "French":
-    parameters = generate_parameters_FR(param_state)
-    doc_parameter_output = generate_word_document_FR(parameters)
-else:
-    parameters = generate_parameters(param_state)
-    doc_parameter_output = generate_word_document(parameters)
-with open(os.path.join(out_dir, "Parameters_Input_Document.docx"), "wb") as f:
+parameters, doc_parameter_output = case_parameters(cfg)
+with open(out_name(step_prefix + "parameters", "docx"), "wb") as f:
     f.write(doc_parameter_output.getvalue())
 
 
@@ -280,7 +274,8 @@ if ocha_data is not None:
         doc_output = create_snapshot_PiN(country_label, final_overview_df, final_overview_df_OCHA,final_overview_dimension_df, final_overview_dimension_df_in_need, selected_language=selected_language)
 
     if selected_language == 'French':
-        doc_output = create_snapshot_PiN_FR(country_label, final_overview_df, final_overview_df_OCHA,final_overview_dimension_df, final_overview_dimension_df_in_need,selected_language=selected_language)
+        # hybrid countries: calculatePIN does not translate the labels, as on the platform (step1=True)
+        doc_output = create_snapshot_PiN_FR(country_label, final_overview_df, final_overview_df_OCHA,final_overview_dimension_df, final_overview_dimension_df_in_need,selected_language=selected_language, step1=hybrid_country)
 
 
 
@@ -290,43 +285,55 @@ if ocha_data is not None:
 
         # Now write each out to disk (or do whatever you want with the in‐memory PNGs)
     for layer, buf in maps.items():
-        fname = os.path.join(out_dir, f"{layer.replace(' ', '_')}.png")
+        fname = out_name(map_content(layer, step_prefix), "png")
         with open(fname, "wb") as f:
             f.write(buf.getvalue())
 
+    # Hybrid countries, step 1 (as the platform's first download): the file to fill for the areas without MSNA data
+    # and the PiN of the areas covered by the MSNA. Both are the inputs of step 2 (run_hybrid_step2.py).
+    if hybrid_country:
+        output_1_2025 = merge_2025_contextDB(country, ocha_data, Tot_PiN_by_admin, "context_DB")
+        with open(out_name("step1_to-fill", "xlsx"), "wb") as f:
+            f.write(create_output1_user(output_1_2025).getvalue())
+        # the step 1 parameters travel in this file to step 2, as on the platform
+        step1_parameters_df, step1_parameters_sheet = parameters_to_df(parameters, selected_language)
+        with pd.ExcelWriter(out_name("step1_covered-areas", "xlsx"), engine="openpyxl") as writer:
+            for sheet_name, df in {**Tot_PiN_JIAF, step1_parameters_sheet: step1_parameters_df}.items():
+                df.to_excel(writer, sheet_name=str(sheet_name)[:31], index=False)
+
 
     ##   ***********************************    save for intermediate check:
-    file_path_pin_test1 = os.path.join(out_dir, '01_pin_sev4.xlsx')
-    file_path_pin_test2 = os.path.join(out_dir, '01_pin_barrier.xlsx')
+    file_path_pin_test1 = os.path.join(check_dir, '01_pin_sev4.xlsx')
+    file_path_pin_test2 = os.path.join(check_dir, '01_pin_barrier.xlsx')
 
 
 
-    file_path_pin_1 = os.path.join(out_dir, '01_pin_percentage.xlsx')
-    file_path_dimension_1 = os.path.join(out_dir, '01_dimension_percentage.xlsx')
-    file_path_pin_female_1 = os.path.join(out_dir, '0a_pin_female_percentage.xlsx')
-    file_path_pin_male_1 = os.path.join(out_dir, '0a_pin_male_percentage.xlsx')
-    file_path_factor = os.path.join(out_dir, '02_factor_strata.xlsx')
-    file_path_pin_2 = os.path.join(out_dir, '03_pin_percentage_total_OCHA.xlsx')
-    file_path_pin_female_2a = os.path.join(out_dir, '0b_female_pin_percentage_total_OCHA.xlsx')
-    file_path_pin_male_2a = os.path.join(out_dir, '0b_male_pin_percentage_total_OCHA.xlsx')
-    file_path_dimension_2 = os.path.join(out_dir, '03_dimension_percentage_total_OCHA.xlsx')
-    file_path_indicator_2 = os.path.join(out_dir, '03_indicator_percentage_total_OCHA.xlsx')
+    file_path_pin_1 = os.path.join(check_dir, '01_pin_percentage.xlsx')
+    file_path_dimension_1 = os.path.join(check_dir, '01_dimension_percentage.xlsx')
+    file_path_pin_female_1 = os.path.join(check_dir, '0a_pin_female_percentage.xlsx')
+    file_path_pin_male_1 = os.path.join(check_dir, '0a_pin_male_percentage.xlsx')
+    file_path_factor = os.path.join(check_dir, '02_factor_strata.xlsx')
+    file_path_pin_2 = os.path.join(check_dir, '03_pin_percentage_total_OCHA.xlsx')
+    file_path_pin_female_2a = os.path.join(check_dir, '0b_female_pin_percentage_total_OCHA.xlsx')
+    file_path_pin_male_2a = os.path.join(check_dir, '0b_male_pin_percentage_total_OCHA.xlsx')
+    file_path_dimension_2 = os.path.join(check_dir, '03_dimension_percentage_total_OCHA.xlsx')
+    file_path_indicator_2 = os.path.join(check_dir, '03_indicator_percentage_total_OCHA.xlsx')
 
-    file_path_factor_girl3= os.path.join(out_dir, '04_pin_factor_girl.xlsx')
-    file_path_factor_boy3= os.path.join(out_dir, '04_pin_factor_boy.xlsx')
-    file_path_factor_ece3= os.path.join(out_dir, '04_pin_factor_ECE.xlsx')
-    file_path_factor_primary3= os.path.join(out_dir, '04_pin_factor_primary.xlsx')
-    file_path_factor_uprimary3= os.path.join(out_dir, '04_pin_factor_upperprimary.xlsx')
-    file_path_factor_secondary3= os.path.join(out_dir, '04_pin_factor_secondary.xlsx')
+    file_path_factor_girl3= os.path.join(check_dir, '04_pin_factor_girl.xlsx')
+    file_path_factor_boy3= os.path.join(check_dir, '04_pin_factor_boy.xlsx')
+    file_path_factor_ece3= os.path.join(check_dir, '04_pin_factor_ECE.xlsx')
+    file_path_factor_primary3= os.path.join(check_dir, '04_pin_factor_primary.xlsx')
+    file_path_factor_uprimary3= os.path.join(check_dir, '04_pin_factor_upperprimary.xlsx')
+    file_path_factor_secondary3= os.path.join(check_dir, '04_pin_factor_secondary.xlsx')
 
-    file_path_overview= os.path.join(out_dir, '05_pin_overview.xlsx')
-    file_path_overview_OCHA= os.path.join(out_dir, '05_pin_overview_OCHA.xlsx')
+    file_path_overview= os.path.join(check_dir, '05_pin_overview.xlsx')
+    file_path_overview_OCHA= os.path.join(check_dir, '05_pin_overview_OCHA.xlsx')
 
-    file_path_dimension_overview= os.path.join(out_dir, '05_dimension_overview.xlsx')
-    file_path_dimension_overview_in_need= os.path.join(out_dir, '05_dimension_overview_in_need.xlsx')
+    file_path_dimension_overview= os.path.join(check_dir, '05_dimension_overview.xlsx')
+    file_path_dimension_overview_in_need= os.path.join(check_dir, '05_dimension_overview_in_need.xlsx')
 
 
-    file_path_pin_tot_by_admin = os.path.join(out_dir, '06_pin_tot_by_admin_area_severity.xlsx')
+    file_path_pin_tot_by_admin = os.path.join(check_dir, '06_pin_tot_by_admin_area_severity.xlsx')
 
 
     # Create an Excel writer object
@@ -449,13 +456,13 @@ if ocha_data is not None:
     print('before saving')
 
     # Save ocha_excel
-    with open(os.path.join(out_dir, "final__OCHA__platform_output.xlsx"), "wb") as f:
+    with open(out_name(step_prefix + "results", "xlsx"), "wb") as f:
         f.write(ocha_excel.getbuffer())
 
 
     indicator_output = create_indicator_output(country_label, indicator_per_admin_status, admin_var=admin_var, ocha_data=ocha_data)
     print("after create_indicator_output")
-    with open(os.path.join(out_dir, "final__indicator__platform_output.xlsx"), "wb") as f:
+    with open(out_name(step_prefix + "by-indicator", "xlsx"), "wb") as f:
         f.write(indicator_output.getbuffer())    
 
     # Save dimension_jiaf_excel
@@ -469,7 +476,7 @@ if ocha_data is not None:
 
 
     # Save the Word document to a file
-    file_path = os.path.join(out_dir, "pin_snapshot_with_charts_and_text2.docx")
+    file_path = out_name(step_prefix + "snapshot", "docx")
     with open(file_path, "wb") as f:
         f.write(doc_output.getvalue())
 
@@ -494,14 +501,14 @@ if no_ocha_data:
     pin_percentage_output    =     create_pin_raw_output(country_label, severity_admin_status_list, admin_var=admin_var, selected_language=selected_language)
 
 
-    with open(os.path.join(out_dir, "no_ocha__indicator__platform_output.xlsx"), "wb") as f:
+    with open(out_name("by-indicator", "xlsx"), "wb") as f:
         f.write(indicator_output.getbuffer())   
-    with open(os.path.join(out_dir, "no_ocha__pin_percentage__platform_output.xlsx"), "wb") as f:
+    with open(out_name("percentage", "xlsx"), "wb") as f:
         f.write(pin_percentage_output.getbuffer())      
      
-    file_path_pin_no_ocha = os.path.join(out_dir, 'no_ocha_pin_percentage.xlsx')
-    file_path_no_ocha_dimension = os.path.join(out_dir, 'no_ocha_dimension_percentage.xlsx')
-    file_path_no_ocha_pin_by_indicator = os.path.join(out_dir, 'no_ocha_pin_by_indicator.xlsx')
+    file_path_pin_no_ocha = os.path.join(check_dir, 'no_ocha_pin_percentage.xlsx')
+    file_path_no_ocha_dimension = os.path.join(check_dir, 'no_ocha_dimension_percentage.xlsx')
+    file_path_no_ocha_pin_by_indicator = os.path.join(check_dir, 'no_ocha_pin_by_indicator.xlsx')
 
     with pd.ExcelWriter(file_path_pin_no_ocha) as writer:
         # Iterate over each category and DataFrame in the dictionary

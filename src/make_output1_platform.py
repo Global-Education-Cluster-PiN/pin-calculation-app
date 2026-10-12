@@ -1,7 +1,9 @@
 import os
 import glob
 import pandas as pd
+import numpy as np
 import copy
+from src.extrapolation import has_2025_data
 
 ## the file context_db will be looked for in the DATA_DIR_CONTEXT_DB according to the country code
 ## the pin2025 file is coming direclty from the previous step of the calculation in the platform: calculation_for_PiN_Dimension.py --> Tot_PiN_by_admin
@@ -57,6 +59,12 @@ def merge_2025_contextDB (country , ocha_data , pin_2025 , context_db_folder ):
     df_pin2025 = copy.deepcopy(pin_2025)
     first_col = df_pin2025.columns[0]
     df_pin2025 = df_pin2025.rename(columns={first_col: "Admin Pcode"})
+    # areas without 2025 MSNA results have 0 in the PiN table: leave their severity columns empty, so that step 2
+    # extrapolates them and areas without 2024 data either are marked "Missing MSNA data for 2024 AND 2025" below
+    no_2025_data = ~has_2025_data(df_pin2025)
+    pin_severity_cols = [col for col in df_pin2025.columns if 'severity' in col.lower()]
+    df_pin2025[pin_severity_cols] = df_pin2025[pin_severity_cols].astype(object)
+    df_pin2025.loc[no_2025_data, pin_severity_cols] = np.nan
     
 
     complete_output = ocha_2025_base.merge(df_pin2025, on="Admin Pcode", how="left")

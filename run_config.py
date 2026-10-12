@@ -2,7 +2,7 @@
 # Pick the case to run with ACTIVE_CASE; add new countries/years as new keyed entries.
 # To run several cases in a row, list them in RUN_CASES and run run_all_cases.py.
 
-ACTIVE_CASE = "LBN_MSNA_2026"                         # single run
+ACTIVE_CASE = "SOM_2026"                         # single run
 RUN_CASES = ["AFG_2026_no_ban", "AFG_2026_limited_ban", "AFG_2026_full_ban"]    # batch run (run_all_cases.py)
 ARCHIVE_INPUTS = True    # True: copy the Assessment dataset and the OCHA file into each successful run's archive zip; False: store only their checksums
 
@@ -422,19 +422,23 @@ CASES = {
         "selected_language": "English",
         "label": "label::english",
         "start_school": "October",
-        "admin_var": "Admin_2: Districts",   
+        "admin_var": "Admin_2: Districts",
         "vector_cycle": [13, 0],
         # TODO: add later — not used by the run script yet
         # "primary_start": 7,
         # "secondary_end": 17,
-        # "step_2_hpc": False,
         "hybrid_country": True,           # True = hybrid country: French labels are not translated in calculatePIN
+        "step_2_hpc": False,              # hybrid countries: False = step 1 (run_PiNcalculation_outside_streamlit.py); True = step 2 (run_hybrid_step2.py)
         "mismatch_admin": False,
         "no_ocha_data": False,
 
         # --- input files
         "excel_data_path": "input/SOM/SOM_MSNA_ALL_edu_data.xlsx",
         "excel_path_ocha": "input/SOM/SOM_Population_figures_filled.xlsx",
+        # step 2 inputs: the step 1 "step1_to-fill" file once filled (copy it to input/ first, so that it stays with the
+        # inputs) and the step 1 "step1_covered-areas" file; a * stands for the newest matching file
+        "updated_pin_path": "input/SOM/SOM_PiN2026_step1_to-fill_filled.xlsx",
+        "covered_pin_path": "output_validation/SOM/SOM_2026/SOM_PiN2026_step1_covered-areas_*.xlsx",
         
         "sheets": {
             "household": "hh clean data",

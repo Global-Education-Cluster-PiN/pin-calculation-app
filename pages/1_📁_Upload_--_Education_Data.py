@@ -5,6 +5,8 @@ from shared_utils import language_selector
 from fuzzywuzzy import process, fuzz
 import numpy as np
 import unicodedata
+from src.vizualize_PiN import pop_parameters_sheet
+from src.extrapolation import has_2025_data
 
 
 st.set_page_config(page_icon='icon/global_education_cluster_gec_logo.ico',  layout='wide')
@@ -163,17 +165,15 @@ def validate_columns_across_sheets(all_sheets):
 ##---------------------------------------------------------------------------------------------------------
 def validate_updated_pin_simple(df, required_columns):
     """
-    Assumes `df` is the uploaded updated PiN DataFrame.
-    Drops the first row, then:
-      1. Checks that all required_columns are present in df.columns (exact match).
-      2. Checks that none of those required columns are entirely empty (after dropping row 0).
+    Checks the filled step 1 file (`df`, read with skiprows=1, so every row is an area):
+      1. all required_columns (the three ticks and the reference area) are present (exact match);
+      2. each area without 2025 MSNA results, except those "Missing MSNA data for 2024 AND 2025", has exactly one
+         tick (stable, decreased or worsened);
+      3. each area ticked decreased or worsened has a reference area: the one given, the suggested one or an alternative.
     Returns: (is_valid: bool, message: str)
     """
-    # Body without the header row
-    df_body = df.iloc[1:].reset_index(drop=True)
-
     # 1. Presence check
-    missing_cols = [col for col in required_columns if col not in df_body.columns]
+    missing_cols = [col for col in required_columns if col not in df.columns]
     if missing_cols:
         template = translations.get(
             "missing_pin_columns",
@@ -185,28 +185,41 @@ def validate_updated_pin_simple(df, required_columns):
             msg = f"Missing required columns: {', '.join(missing_cols)}"
         return False, msg
 
-    # 2. Content check: ensure required columns are not entirely empty
-    empty_cols = []
-    for col in required_columns:
-        series = (
-            df_body[col]
-            .astype(str)
-            .str.strip()
-            .replace({"": np.nan, "nan": np.nan, "NaN": np.nan})
-        )
-        if series.isna().all():
-            empty_cols.append(col)
+    stable_col, decreased_col, worsened_col, reference_col = required_columns
 
-    if empty_cols:
+    def ticked(col):
+        return df[col].astype(str).str.strip().str.lower().eq("x")
+
+    def filled(col):
+        if col not in df.columns:
+            return pd.Series(False, index=df.index)
+        return df[col].notna() & ~df[col].astype(str).str.strip().str.lower().isin(["", "nan", "none"])
+
+    # areas to fill: no 2025 MSNA results (empty, or 0 in older files), except those without 2024 data either
+    severity_cols = [col for col in df.columns if "severity" in col]
+    missing_both = df[severity_cols].astype(str).apply(lambda s: s.str.strip().str.lower()).eq(
+        "missing msna data for 2024 and 2025").all(axis=1) if severity_cols else pd.Series(False, index=df.index)
+    to_fill = ~has_2025_data(df) & ~missing_both
+
+    # 2. Exactly one tick per area to fill
+    n_ticks = ticked(stable_col).astype(int) + ticked(decreased_col).astype(int) + ticked(worsened_col).astype(int)
+    wrong_ticks = df.loc[to_fill & (n_ticks != 1), "Admin Pcode"].astype(str).tolist()
+    if wrong_ticks:
         template = translations.get(
-            "empty_pin_column",
-            "The following required filled columns are entirely empty: {cols}"
+            "pin_ticks_error",
+            "Tick exactly one of 'stable', 'decreased' or 'worsened' (with an X) for these areas without 2025 data: {areas}"
         )
-        try:
-            msg = template.format(cols=", ".join(empty_cols))
-        except Exception:
-            msg = f"The following required filled columns are entirely empty: {', '.join(empty_cols)}"
-        return False, msg
+        return False, template.format(areas=", ".join(wrong_ticks))
+
+    # 3. A reference area for the areas ticked decreased or worsened
+    has_reference = filled(reference_col) | filled("Suggested reference area for extrapolation") | filled("Alternative reference areas")
+    no_reference = df.loc[to_fill & (ticked(decreased_col) | ticked(worsened_col)) & ~has_reference, "Admin Pcode"].astype(str).tolist()
+    if no_reference:
+        template = translations.get(
+            "pin_reference_error",
+            "Give a reference area for these areas ticked 'decreased' or 'worsened': {areas}"
+        )
+        return False, template.format(areas=", ".join(no_reference))
 
     return True, ""
 
@@ -393,23 +406,23 @@ else:
             except Exception as e:
                 st.error(f"Error loading sheets: {str(e)}")  # Handle any errors, like missing sheets
 
-hybrid_scenario_countries = [
-    'Central African Republic -- CAR',
-    'Ethiopia -- ETH',
-    'Democratic Republic of the Congo -- DRC',
-    #'Mali -- MLI',
-    # 'Lebanon -- LBN',
-    'Somalia -- SOM',
-    'South Sudan -- SSD'
-]
+# Hybrid country (two-step calculation): ticked by the user, unticked by default (local runs: "hybrid_country" in
+# run_config.py). The value is kept under 'hybrid_country' because Streamlit drops a widget's own key on other pages.
+st.session_state['hybrid_country'] = st.checkbox(
+    translations["hybrid_country_label"],
+    value=st.session_state.get('hybrid_country', False),
+    help=translations["hybrid_country_help"],
+    key='hybrid_country_checkbox'
+)
+
 # Define the two scenario labels clearly
 SCENARIO_1_LABEL = translations["SCENARIO_1"]
 SCENARIO_2_LABEL = translations["SCENARIO_2"]
 
 
 
-# Determine scenario for this country
-if selected_country in hybrid_scenario_countries:
+# Determine scenario: step 1 or step 2, for hybrid countries only
+if st.session_state['hybrid_country']:
     with st.container(border=True):
         st.markdown(f"""
             <div style="margin-bottom:6px;">
@@ -453,18 +466,21 @@ if is_scenario_2:
         updated_2025_pin_file_checks = pd.read_excel(uploaded_updated_2025_pin_file, engine='openpyxl',skiprows=1)
         updated_2025_pin_file = pd.read_excel(uploaded_updated_2025_pin_file, engine='openpyxl',skiprows=1)
         uploaded_covered_2025_pin = pd.read_excel(uploaded_covered_2025_pin_file, engine='openpyxl',sheet_name=None)
+        # the step 1 parameters sheet is not a population group: keep it apart for the "Parameters Used" sheet of the results
+        st.session_state['step1_parameters_df'] = pop_parameters_sheet(uploaded_covered_2025_pin)
 
-        st.session_state['updated_2025_pin_file'] = updated_2025_pin_file
         st.session_state['uploaded_covered_2025_pin'] = uploaded_covered_2025_pin
 
         try:
             df_updated = updated_2025_pin_file_checks
 
             valid, msg = validate_updated_pin_simple(df_updated, REQUIRED_COLUMN_UPDATED_PIN)
+            # the filled file is kept only when valid: "Proceed" checks it (has_updated_pin below)
             if valid:
                 st.session_state['updated_2025_pin_file'] = updated_2025_pin_file
                 st.success(translations["extrapolation_uploaded"])
             else:
+                st.session_state.pop('updated_2025_pin_file', None)
                 st.error(msg)
         except Exception as e:
             st.error(f"Failed to read/validate updated PiN file: {e}")

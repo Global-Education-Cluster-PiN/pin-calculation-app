@@ -41,7 +41,7 @@ The PiN Calculation App automates the calculation of People in Need (PiN) figure
 - Hybrid calculation workflows for specific countries
 - Automated severity identification 
 - Geographic visualization with severity maps
-- GitHub integration for automatic file archiving (**the token needs to be updated**)
+- GitHub integration for automatic file archiving
 - word snapshot generation for HNO (Humanitarian Needs Overview) submissions
 - Multi-language support (English and French)
 
@@ -53,9 +53,7 @@ The PiN Calculation App automates the calculation of People in Need (PiN) figure
 PiN_app_dev/
 ├── GEC_PiN.py                    # Main Streamlit app entry point
 ├── shared_utils.py                # Shared utilities (language selector, etc.)
-├── requirements.txt               # Python dependencies
-└── .streamlit/
-    └── secrets.toml              # GitHub tokens and credentials (not in repo)
+└── requirements.txt               # Python dependencies
 ```
 
 **`GEC_PiN.py`**: Main entry point that initializes the Streamlit app, sets up page configuration, handles authentication, and provides the landing page with navigation to the three calculation pages.
@@ -298,16 +296,17 @@ results = calculatePIN(country, edu_data, household_data, ...)
    - Generate outputs → `create_output()`, `create_snapshot_PiN()`
 4. **Download**: Single ZIP file with all results
 
-**Outputs**:
-- `PiN_results_{country}_{timestamp}.xlsx`
-- `PiN_by_indicator_{country}_{timestamp}.xlsx`
-- `PiN_snapshot_{country}_{timestamp}.docx`
-- `Parameters_Input_Document_{timestamp}.docx`
-- Severity maps (PNG files)
+**Outputs** (names: see [Output Files](#output-files)):
+- `<ISO>_PiN2026_results_<date-time>.xlsx`
+- `<ISO>_PiN2026_by-indicator_<date-time>.xlsx`
+- `<ISO>_PiN2026_snapshot_<date-time>.docx`
+- `<ISO>_PiN2026_parameters_<date-time>.docx`
+- Severity maps: `<ISO>_PiN2026_map-..._<date-time>.png`
 
 ### Hybrid Countries (Two-Step Process)
 
-**Countries**: CAR, Ethiopia, DRC, Lebanon, Somalia, South Sudan
+**Which countries**: chosen for each analysis, with the "Hybrid country" tick box on Page 1 (unticked by default; tick it
+in both steps). In local runs: `"hybrid_country": True` in the case in `run_config.py` (`"step_2_hpc"` chooses the step).
 
 **Why Hybrid?**: MSNA only covers targeted areas; need to extrapolate to entire country
 
@@ -319,21 +318,24 @@ results = calculatePIN(country, edu_data, household_data, ...)
    - Calculate PiN for covered areas → `calculatePIN()`
    - Merge with secondary data → `merge_2025_contextDB()`
    - Format for user completion → `create_output1_user()`
-4. **Download**: Temporary file to fill
-   - `PiN_temporary_to_fill_{country}_{timestamp}.xlsx`
-   - User manually completes empty cells using secondary data
+4. **Download**: `<ISO>_PiN2026_step1_documents_<date-time>.zip`, with the two files needed for step 2:
+   - `<ISO>_PiN2026_step1_to-fill_<date-time>.xlsx`: the user ticks, for each area without 2025 MSNA data, whether
+     needs are stable, decreased or worsened, and gives a reference area for decreased/worsened
+   - `<ISO>_PiN2026_step1_covered-areas_<date-time>.xlsx`: the PiN of the areas covered by the MSNA, by population
+     group, plus the parameters used in step 1 (carried into the step 2 results)
 
 #### **Step 2: Extrapolation & Final Calculation**
 
 1. **Upload** (Page 1): 
-   - Completed temporary file from Step 1
-   - 2024 PiN data for comparison
+   - Completed `step1_to-fill` file and the `step1_covered-areas` file from Step 1
+   - (the 2024 PiN is read from `pin2024_cat/<ISO>_PIN2024.xlsx`)
 2. **Skip** Page 2 (configuration already done)
 3. **Calculate** (Page 3):
    - Extrapolate using delta method → `extrapolate_df_2025_updated()`
    - Recalculate country-wide PiN → `UPDATE_calculatePIN()`
    - Generate final outputs
-4. **Download**: Final PiN results for entire country
+4. **Download**: Final PiN results for entire country (`<ISO>_PiN2026_step2_documents_<date-time>.zip`); areas that
+   could not be extrapolated as asked are listed on Page 3 and in the "Extrapolation notes" sheet of the results
 
 **Key Difference**: Step 2 uses `st.session_state.step_2_hpc = True` flag to trigger extrapolation workflow
 
@@ -369,9 +371,9 @@ results = calculatePIN(country, edu_data, household_data, ...)
 3. Generate percentage output → `create_pin_raw_output()`
 
 **Outputs**:
-- `PiN_percentage_{country}_{timestamp}.xlsx` (severity %, not absolute numbers)
-- `PiN_by_indicator_{country}_{timestamp}.xlsx`
-- `Parameters_Input_Document_{timestamp}.docx`
+- `<ISO>_PiN2026_percentage_<date-time>.xlsx` (severity %, not absolute numbers)
+- `<ISO>_PiN2026_by-indicator_<date-time>.xlsx`
+- `<ISO>_PiN2026_parameters_<date-time>.docx`
 
 ## Installation and Setup
 ### Prerequisites
@@ -398,14 +400,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. **Configure secrets** (for GitHub integration):
-Create `.streamlit/secrets.toml`:
-```toml
-[github]
-token = "your_github_personal_access_token"
-```
-
-5. **Run the application**:
+4. **Run the application**:
 ```bash
 streamlit run GEC_PiN.py
 ```
@@ -436,7 +431,7 @@ The app will open in your browser at `http://localhost:8501`
 - Completed temporary file (for hybrid step 2)
 
 
-### GitHub Archive -- the token must be updated 
+### GitHub Archive
 
 All outputs are automatically uploaded to the GitHub repository at:
 ```
@@ -447,21 +442,43 @@ This creates a historical archive of all calculations for audit and comparison p
 
 
 
+## Output Files
+
+All result files are named `<ISO>_PiN<year>_<content>_<YYYYMMDD-HHMM>.<ext>` (`src/output_names.py`), the same in
+the platform downloads (inside and outside the ZIP) and in local runs, e.g. `SOM_PiN2026_results_20261011-1745.xlsx`.
+The date and time keep a new download or run from replacing an earlier one. The year is `PIN_YEAR` in
+`src/output_names.py`.
+
+| Content | File |
+|---|---|
+| `documents` | ZIP with all the files of a download (`step1_documents`, `step2_documents` for hybrid countries) |
+| `results` | PiN results (Excel), with the "Parameters Used" sheet |
+| `by-indicator` | PiN by indicator (Excel) |
+| `snapshot` | PiN snapshot (Word) |
+| `parameters` | Parameters used (Word) |
+| `map-area-severity`, `map-severity-3/4/5`, `map-total-PiN` | Severity maps (PNG) |
+| `percentage` | PiN percentages, without OCHA figures |
+| `step1_to-fill`, `step1_covered-areas` | Hybrid step 1: the two files to upload for step 2 |
+| `step2_results`, `step2_snapshot`, `step2_map-...` | Hybrid step 2 |
+
+In local runs the intermediate check files (`00_...`, `01_...`, `step2_extrapolation_details.xlsx`) go to a folder per
+run, `checks_<YYYYMMDD-HHMM>`, next to the result files; in `run_config.py` a step 2 input path with `*` stands for the
+newest matching file.
+
 ## Configuration: Country Lists
 
 ### Overview
 
 The application categorizes countries into different workflow types. When adding or removing countries from these categories, you must update the country lists in **multiple locations** to ensure consistent behavior across the application.
 
+Hybrid countries are not a list: the user ticks "Hybrid country" on Page 1 for each analysis (local runs: `"hybrid_country"` in `run_config.py`).
+
 ### Country Categories
 
-**1. Hybrid Scenario Countries** (Two-step PiN calculation with extrapolation)
-- Central African Republic, Ethiopia, DRC, Lebanon, Somalia, South Sudan
-
-**2. Alternative Countries** (JENA/EMIS data integration)
+**1. Alternative Countries** (JENA/EMIS data integration)
 - Niger, Nigeria, Mozambique
 
-**3. Overall Countries** (Special aggregation logic)
+**2. Overall Countries** (Special aggregation logic)
 - Haiti, Sudan, DRC, South Sudan
 
 ### Files Requiring Updates
@@ -471,18 +488,6 @@ When modifying country lists, you must update **ALL** of the following locations
 #### **1. Page 1: Upload -- Education Data**
 **File:** `pages/1_📁_Upload_--_Education_Data.py`
 
-**Line ~276-284:** Hybrid scenario countries list
-```python
-hybrid_scenario_countries = [
-    'Central African Republic -- CAR',
-    'Ethiopia -- ETH',
-    'Democratic Republic of the Congo -- DRC',
-    'Lebanon -- LBN',
-    'Somalia -- SOM',
-    'South Sudan -- SSD'
-]
-```
-
 **Line ~341:** Alternative countries list
 ```python
 alternative_countries = ['Niger -- NER', 'Nigeria -- NRA', 'Mozambique -- MOZ']
@@ -490,18 +495,6 @@ alternative_countries = ['Niger -- NER', 'Nigeria -- NRA', 'Mozambique -- MOZ']
 
 #### **2. Page 3: Download -- PiN Figures and Other Outputs**
 **File:** `pages/3_📋_Download_--_PiN_figures_and_other_outputs.py`
-
-**Line ~321-329:** Hybrid scenario countries list
-```python
-hybrid_scenario_countries = [
-    'Central African Republic -- CAR',
-    'Ethiopia -- ETH',
-    'Democratic Republic of the Congo -- DRC',
-    'Lebanon -- LBN',
-    'Somalia -- SOM',
-    'South Sudan -- SSD'
-]
-```
 
 **Line ~337:** Alternative countries list
 ```python
@@ -530,46 +523,17 @@ OVERALL_COUNTRIES = {'Haiti -- HTI', 'Sudan -- SDN', 'Democratic Republic of the
 
 When adding or removing a country from a category, follow this checklist:
 
-- [ ] Update `hybrid_scenario_countries` in `1_📁_Upload_--_Education_Data.py` (Line ~276)
 - [ ] Update `alternative_countries` in `1_📁_Upload_--_Education_Data.py` (Line ~341)
-- [ ] Update `hybrid_scenario_countries` in `3_📋_Download_--_PiN_figures_and_other_outputs.py` (Line ~321)
 - [ ] Update `alternative_countries` in `3_📋_Download_--_PiN_figures_and_other_outputs.py` (Line ~337)
 - [ ] Update `OVERALL_COUNTRIES` in `calculation_for_PiN_Dimension.py` (Lines ~447, ~572, ~788)
 - [ ] Test the workflow for the affected country
 - [ ] Update corresponding country list in debugging scripts if applicable
 
-### Example: Adding a New Hybrid Country
+### Example: A New Hybrid Country
 
-To add Mali as a hybrid country:
-
-1. In `pages/1_📁_Upload_--_Education_Data.py` (Line ~276):
-```python
-hybrid_scenario_countries = [
-    'Central African Republic -- CAR',
-    'Ethiopia -- ETH',
-    'Democratic Republic of the Congo -- DRC',
-    'Mali -- MLI',  # ← ADD HERE
-    'Lebanon -- LBN',
-    'Somalia -- SOM',
-    'South Sudan -- SSD'
-]
-```
-
-2. In `pages/3_📋_Download_--_PiN_figures_and_other_outputs.py` (Line ~321):
-```python
-hybrid_scenario_countries = [
-    'Central African Republic -- CAR',
-    'Ethiopia -- ETH',
-    'Democratic Republic of the Congo -- DRC',
-    'Mali -- MLI',  # ← ADD HERE
-    'Lebanon -- LBN',
-    'Somalia -- SOM',
-    'South Sudan -- SSD'
-]
-```
-
-3. Ensure Mali has the required secondary data in `context_DB/` folder
-4. Ensure Mali has 2024 PiN data in `pin2024_cat/` folder for extrapolation
+No code change: tick "Hybrid country" on Page 1 (local runs: `"hybrid_country": True` in `run_config.py`). The country needs:
+1. Secondary data in the `context_DB/` folder (`<ISO>_context_db.xlsx`)
+2. Its 2024 PiN in the `pin2024_cat/` folder (`<ISO>_PIN2024.xlsx`) for the extrapolation
 
 ### Important Notes
 

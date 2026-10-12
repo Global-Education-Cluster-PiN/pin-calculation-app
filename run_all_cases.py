@@ -14,9 +14,11 @@ for case in run_config.RUN_CASES:
     print(f"\n===== {case} =====", flush=True)
     log_path = os.path.join("logs", f"{case}.log")
     started = time.time()
+    # hybrid step 2 cases run the extrapolation script instead of the full calculation
+    script = "run_hybrid_step2.py" if run_config.CASES[case].get("step_2_hpc", False) else "run_PiNcalculation_outside_streamlit.py"
     with open(log_path, "w", encoding="utf-8") as log:
         proc = subprocess.Popen(
-            [sys.executable, "run_PiNcalculation_outside_streamlit.py"],
+            [sys.executable, script],
             # unbuffered: lines appear as they are printed; Agg: charts are only saved to files, and IDE backends
             # (e.g. Positron's MPLBACKEND) cannot be imported in the child process
             env={**os.environ, "PIN_CASE": case, "PYTHONUNBUFFERED": "1", "MPLBACKEND": "Agg"},

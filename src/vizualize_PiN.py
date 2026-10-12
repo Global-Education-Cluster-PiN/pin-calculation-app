@@ -401,7 +401,62 @@ def apply_final_formatting(country_name, workbook, overview_df, small_overview_d
 
 
 # Function to create output with final formatting
-def create_output(country_label, dataframes, overview_df, small_overview_df, overview_sheet_name, admin_var, ocha=True, tot_severity=None, selected_language='English', parameters=None, ocha_data=None):
+PARAMETERS_SHEET = {"English": "Parameters Used", "French": "Paramètres Utilisés"}
+NOTES_SHEET = {"English": "Extrapolation notes", "French": "Notes d'extrapolation"}
+
+
+def parameters_to_df(parameters, selected_language='English'):
+    """Return (table, sheet name) of the "Parameters Used" sheet ("Paramètres Utilisés" in French)."""
+    if selected_language == "French":
+        parameters_df = pd.DataFrame(
+            [{"Catégorie": "Informations générales", "Clé": key, "Valeur": value}
+            for key, value in parameters["informations_generales"].items()] +
+            [{"Catégorie": "Indicateurs MSNA par dimension du PiN", "Clé": f"{key} - {sub_key}", "Valeur": sub_value}
+            for key, sub_dict in parameters["indicateurs_msna_par_dimension"].items()
+            for sub_key, sub_value in (sub_dict.items() if isinstance(sub_dict, dict) else [(key, sub_dict)])] +
+            [{"Catégorie": "Classification de la sévérité", "Clé": f"{key} - {sub_key}", "Valeur": sub_value}
+            for key, sub_dict in parameters["classification_de_sévérité"].items()
+            for sub_key, sub_value in sub_dict.items()] +
+            [{"Catégorie": "Unité d’analyse HNO", "Clé": key, "Valeur": value}
+            for key, value in parameters["unité_administrative"].items()] +
+            [{"Catégorie": "Cycles scolaires", "Clé": key, "Valeur": value}
+            for key, value in parameters["cycles_scolaires"].items()] +
+            [{"Catégorie": "Groupes de population", "Clé": key, "Valeur": value}
+            for key, value in parameters.get("groupes_de_population", {}).items()]
+        )
+        return parameters_df, PARAMETERS_SHEET["French"]
+    parameters_df = pd.DataFrame(
+        [{"Category": "General Information", "Key": key, "Value": value}
+        for key, value in parameters["general_info"].items()] +
+        [{"Category": "MSNA Indicators per PiN dimension", "Key": f"{key} - {sub_key}", "Value": sub_value}
+        for key, sub_dict in parameters["msna_indicators_per_PiN_dimension"].items()
+        for sub_key, sub_value in (sub_dict.items() if isinstance(sub_dict, dict) else [(key, sub_dict)])] +
+        [{"Category": "Severity Classification", "Key": f"{key} - {sub_key}", "Value": sub_value}
+        for key, sub_dict in parameters["severity_classification"].items()
+        for sub_key, sub_value in sub_dict.items()] +
+        [{"Category": "HNO Unit of analysis", "Key": key, "Value": value}
+        for key, value in parameters["admin_unit"].items()] +
+        [{"Category": "School Cycles", "Key": key, "Value": value}
+        for key, value in parameters["school_cycles"].items()] +
+        [{"Category": "Population Groups", "Key": key, "Value": value}
+        for key, value in parameters.get("population_groups", {}).items()]
+    )
+    return parameters_df, PARAMETERS_SHEET["English"]
+
+
+def pop_parameters_sheet(sheets):
+    """Remove the parameters sheet from a dict of sheets read with sheet_name=None and return it (None if absent).
+
+    Hybrid step 1 writes it into the PiN of the areas covered by the MSNA, so that step 2 (which skips page 2)
+    can show the step 1 parameters; it is not a population group and must not reach the extrapolation.
+    """
+    for sheet_name in PARAMETERS_SHEET.values():
+        if sheet_name in sheets:
+            return sheets.pop(sheet_name)
+    return None
+
+
+def create_output(country_label, dataframes, overview_df, small_overview_df, overview_sheet_name, admin_var, ocha=True, tot_severity=None, selected_language='English', parameters=None, ocha_data=None, parameters_df=None, notes=None):
     country_name = country_label.split('__')[0]  # Extract the part before the "__"
     print("inside create_output")
     label_overall_severity = 'Overall PiN and severity'
@@ -424,43 +479,15 @@ def create_output(country_label, dataframes, overview_df, small_overview_df, ove
             df = add_admin_label(df, ocha_data)
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
+        # parameters_df: a ready-made table, e.g. the step 1 parameters carried into hybrid step 2
         if parameters:
-            if selected_language == "English":
-                parameters_df = pd.DataFrame(
-                    [{"Category": "General Information", "Key": key, "Value": value}
-                    for key, value in parameters["general_info"].items()] +
-                    [{"Category": "MSNA Indicators per PiN dimension", "Key": f"{key} - {sub_key}", "Value": sub_value}
-                    for key, sub_dict in parameters["msna_indicators_per_PiN_dimension"].items()
-                    for sub_key, sub_value in (sub_dict.items() if isinstance(sub_dict, dict) else [(key, sub_dict)])] +
-                    [{"Category": "Severity Classification", "Key": f"{key} - {sub_key}", "Value": sub_value}
-                    for key, sub_dict in parameters["severity_classification"].items()
-                    for sub_key, sub_value in sub_dict.items()] +
-                    [{"Category": "HNO Unit of analysis", "Key": key, "Value": value}
-                    for key, value in parameters["admin_unit"].items()] +
-                    [{"Category": "School Cycles", "Key": key, "Value": value}
-                    for key, value in parameters["school_cycles"].items()] +
-                    [{"Category": "Population Groups", "Key": key, "Value": value}
-                    for key, value in parameters.get("population_groups", {}).items()]
-                )
-                parameters_df.to_excel(writer, sheet_name="Parameters Used", index=False)
-            elif selected_language == "French":
-                parameters_df = pd.DataFrame(
-                    [{"Catégorie": "Informations générales", "Clé": key, "Valeur": value}
-                    for key, value in parameters["informations_generales"].items()] +
-                    [{"Catégorie": "Indicateurs MSNA par dimension du PiN", "Clé": f"{key} - {sub_key}", "Valeur": sub_value}
-                    for key, sub_dict in parameters["indicateurs_msna_par_dimension"].items()
-                    for sub_key, sub_value in (sub_dict.items() if isinstance(sub_dict, dict) else [(key, sub_dict)])] +
-                    [{"Catégorie": "Classification de la sévérité", "Clé": f"{key} - {sub_key}", "Valeur": sub_value}
-                    for key, sub_dict in parameters["classification_de_sévérité"].items()
-                    for sub_key, sub_value in sub_dict.items()] +
-                    [{"Catégorie": "Unité d’analyse HNO", "Clé": key, "Valeur": value}
-                    for key, value in parameters["unité_administrative"].items()] +
-                    [{"Catégorie": "Cycles scolaires", "Clé": key, "Valeur": value}
-                    for key, value in parameters["cycles_scolaires"].items()] +
-                    [{"Catégorie": "Groupes de population", "Clé": key, "Valeur": value}
-                    for key, value in parameters.get("groupes_de_population", {}).items()]
-                )
-                parameters_df.to_excel(writer, sheet_name="Paramètres Utilisés", index=False)
+            parameters_df, _ = parameters_to_df(parameters, selected_language)
+        if parameters_df is not None:
+            parameters_df.to_excel(writer, sheet_name=PARAMETERS_SHEET.get(selected_language, PARAMETERS_SHEET["English"]), index=False)
+
+        # notes: hybrid step 2, areas that could not be extrapolated as asked (see extrapolate_df_2025_updated)
+        if notes:
+            pd.DataFrame(notes).to_excel(writer, sheet_name=NOTES_SHEET.get(selected_language, NOTES_SHEET["English"]), index=False)
 
     print("after parameter")
 
