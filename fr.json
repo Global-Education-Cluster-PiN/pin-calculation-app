@@ -178,7 +178,11 @@
     "confirm_mapping": "Confirmer l’association",
     "mapping_error": "Veuillez sélectionner au minimum la valeur « Hôte » et éviter les doublons.",
     "mapping_saved": "Association enregistrée.",
-    "mapping_confirmed_status": "Association des groupes de population confirmée"
+    "mapping_confirmed_status": "Association des groupes de population confirmée",
+    "gec_compliance_label": "Conformité GEC",
+    "gec_compliant": "Conforme au GEC",
+    "not_gec_compliant": "NON conforme au GEC",
+    "gec_compliance_help": "Conforme au GEC : toutes les filles non scolarisées de plus de 12 ans sont classées en sévérité 5. NON conforme au GEC : les règles standard s'appliquent (sévérité selon la raison de la non-fréquentation)."
 
 
 

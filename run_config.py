@@ -12,6 +12,7 @@ CASES = {
         # second '## CAR' block
         # --- general
         "country": 'Central African Republic -- CAR',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'French',
         "label": 'label::Français (fr)',
         "start_school": 'September',
@@ -80,7 +81,7 @@ CASES = {
         
         # --- general
         "country": 'Afghanistan -- AFG',
-        "full_GEC_compliant": False,  # True: skip the AFG-only severity rules (girls >12 out of school: barrier set to "ban" and severity 5) and apply the standard GEC rules
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',
         "label": 'label::English',
         "start_school": 'November',
@@ -146,7 +147,7 @@ CASES = {
         
         # --- general
         "country": 'Afghanistan -- AFG',
-        "full_GEC_compliant": True,  # True: skip the AFG-only severity rules (girls >12 out of school: barrier set to "ban" and severity 5) and apply the standard GEC rules
+        "full_GEC_compliant": True,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',
         "label": 'label::English',
         "start_school": 'November',
@@ -212,7 +213,7 @@ CASES = {
         
         # --- general
         "country": 'Afghanistan -- AFG',
-        "full_GEC_compliant": True,  # True: skip the AFG-only severity rules (girls >12 out of school: barrier set to "ban" and severity 5) and apply the standard GEC rules
+        "full_GEC_compliant": True,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',
         "label": 'label::English',
         "start_school": 'November',
@@ -277,6 +278,7 @@ CASES = {
     "LBN_MSNA_2026": {
         # --- general
         "country": "Lebanon -- LBN",
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": "English",
         "label": "label::English",
         "start_school": "September",
@@ -351,6 +353,7 @@ CASES = {
     "VaSYR_2026": {
         # --- general
         "country": "Lebanon -- LBN",
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": "English",
         "label": "label::English",
         "start_school": "September",
@@ -425,6 +428,7 @@ CASES = {
     "SOM_2026": {
         # --- general
         "country": "Somalia -- SOM",
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": "English",
         "label": "label::english",
         "start_school": "October",
@@ -499,6 +503,7 @@ CASES = {
     "SSD_2025": {
         # --- general
         "country": "South Sudan -- SSD",
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": "English",
         "label": "label",
         "start_school": "October",
@@ -573,6 +578,7 @@ CASES = {
         # from cases_coutry_helpers.py lines 2-82 ("## Lemuria")
         # --- general
         "country": 'Lemuria -- LMR',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',
         "label": 'label::English',
         "start_school": 'September',
@@ -641,6 +647,7 @@ CASES = {
         # from cases_coutry_helpers.py lines 83-147 ("## MMR")
         # --- general
         "country": 'Myanmar -- MMR',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',  # not set in original: default — check
         "label": 'label::English',
         "start_school": 'September',
@@ -709,6 +716,7 @@ CASES = {
         # from cases_coutry_helpers.py lines 148-209 ("## BFA")
         # --- general
         "country": 'Burkina Faso -- BFA',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',  # not set in original: default — check
         "label": 'label',
         "start_school": 'September',
@@ -772,7 +780,7 @@ CASES = {
         # from cases_coutry_helpers.py lines 210-275 ("## AFG")
         # --- general
         "country": 'Afghanistan -- AFG',
-        "full_GEC_compliant": True,  # True: skip the AFG-only severity rules (girls >12 out of school: barrier set to "ban" and severity 5) and apply the standard GEC rules
+        "full_GEC_compliant": True,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',
         "label": 'label::English',
         "start_school": 'November',
@@ -838,6 +846,7 @@ CASES = {
         # from cases_coutry_helpers.py lines 276-340 ("## SOM")
         # --- general
         "country": 'Somalia -- SOM',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',
         "label": 'label::english',
         "start_school": 'September',
@@ -902,6 +911,7 @@ CASES = {
         # year inferred from position in cases_coutry_helpers.py (file name has no year)
         # --- general
         "country": 'Niger -- NER',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'French',
         "label": 'label::french',
         "start_school": 'September',
@@ -965,6 +975,7 @@ CASES = {
         # from cases_coutry_helpers.py lines 406-469 ("## DRC")
         # --- general
         "country": 'Democratic Republic of the Congo -- DRC',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'French',
         "label": 'label::french',
         "start_school": 'September',
@@ -1029,6 +1040,7 @@ CASES = {
         # '## DRC-2' block: Assessment 2023 data with DRC_ocha_2025
         # --- general
         "country": 'Democratic Republic of the Congo -- DRC',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'French',
         "label": 'label',
         "start_school": 'September',
@@ -1095,6 +1107,7 @@ CASES = {
         # from cases_coutry_helpers.py lines 599-659 ("## MLI")
         # --- general
         "country": 'Mali -- MLI',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',
         "label": 'label::french',
         "start_school": 'October',
@@ -1158,6 +1171,7 @@ CASES = {
         # first '## CAR' block (different barriers/indicators from CAR_2024_b)
         # --- general
         "country": 'Central African Republic -- CAR',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',  # not set in original: default — check
         "label": 'label::french',
         "start_school": 'September',
@@ -1221,6 +1235,7 @@ CASES = {
         # second '## CAR' block
         # --- general
         "country": 'Central African Republic -- CAR',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'French',
         "label": 'label::french',
         "start_school": 'September',
@@ -1289,6 +1304,7 @@ CASES = {
         # from cases_coutry_helpers.py lines 726-801 ("## MOZ")
         # --- general
         "country": 'Mozambique -- MOZ',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',
         "label": 'label::english',
         "start_school": 'June',
@@ -1355,6 +1371,7 @@ CASES = {
         # from cases_coutry_helpers.py lines 802-874 ("## MMR")
         # --- general
         "country": 'Myanmar -- MMR',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'English',
         "label": 'label::English',
         "start_school": 'June',
@@ -1424,6 +1441,7 @@ CASES = {
         # from cases_coutry_helpers.py lines 875-942 ("## MLI")
         # --- general
         "country": 'Mali -- MLI',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'French',
         "label": 'label::french',
         "start_school": 'October',
@@ -1489,6 +1507,7 @@ CASES = {
         # from run_PiNcalculation_outside_streamlit2.py lines 42-119 ("## BFA (run2)")
         # --- general
         "country": 'Burkina Faso -- BFA',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": 'French',  # original was 'label::French', which made outputs English
         "label": 'label::French',
         "start_school": 'September',

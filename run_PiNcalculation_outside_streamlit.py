@@ -170,7 +170,7 @@ def run_severity():
     label, 
     admin_var, vector_cycle, start_school, status_var,
     selected_language= selected_language,
-    full_GEC_compliant=cfg.get("full_GEC_compliant", True))
+    full_GEC_compliant=cfg["full_GEC_compliant"])
 
 key_severity = fingerprint(key_cleaned, file_signature("src/add_PiN_severity.py"))
 edu_data_severity, drop_msg = load_or_compute("03_severity", key_severity, run_severity)
