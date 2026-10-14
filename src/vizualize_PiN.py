@@ -456,6 +456,20 @@ def pop_parameters_sheet(sheets):
     return None
 
 
+def pop_groups_from_parameters(parameters_df):
+    """Population groups chosen in step 1, read from its "Parameters Used" sheet: {OCHA group: group in the data}.
+
+    Returns None when the sheet has no population groups (files from before they were recorded).
+    """
+    if parameters_df is None or parameters_df.empty:
+        return None
+    category, key, value = parameters_df.columns[:3]
+    rows = parameters_df[parameters_df[category].isin(["Population Groups", "Groupes de population"])]
+    mapping = {str(k).split(" -- ")[0]: (None if pd.isna(v) or str(v).strip() == "" else str(v).strip())
+               for k, v in zip(rows[key], rows[value]) if " -- " in str(k)}
+    return mapping if any(mapping.values()) else None
+
+
 def create_output(country_label, dataframes, overview_df, small_overview_df, overview_sheet_name, admin_var, ocha=True, tot_severity=None, selected_language='English', parameters=None, ocha_data=None, parameters_df=None, notes=None):
     country_name = country_label.split('__')[0]  # Extract the part before the "__"
     print("inside create_output")

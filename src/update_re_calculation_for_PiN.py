@@ -95,13 +95,10 @@ def build_ocha_by_category(ocha_data, mapped_statuses):
         if status_label == "No match found":
             continue  # Skip
 
-        # Try to find the matching column in ocha_data
-        matching_col = next(
-            (col for col in ocha_data.columns if template_label in col and 'children' in col.lower()),
-            None
-        )
+        # the column of step 1 (extract_status_data), by its exact name: a match by text could take another column
+        matching_col = f"{template_label} -- Children/Enfants (5-17)"
 
-        if matching_col:
+        if matching_col in ocha_data.columns:
             df = ocha_data[['Admin Pcode', matching_col]].copy()
             df = df.rename(columns={matching_col: 'TotN'})
             df['Category'] = status_label
@@ -354,8 +351,11 @@ def translate_labels(data, translation_dict):
 ########################################################################################################################################
 ########################################################################################################################################
 def UPDATE_calculatePIN (country , pin_2025_updated_perc, ocha_data,
-                label ,  
-                selected_language ):
+                label ,
+                selected_language, mapped_statuses=None):
+    # mapped_statuses: OCHA population column -> population group of the data, as chosen in step 1, e.g.
+    # {'Host/Hôte': 'hote', 'IDP/PDI': 'idp_site', 'Returnees/Retournés': 'retourne', 'Refugees/Refugiees': None,
+    #  'Other': 'idp_host'}. Without it, the groups are guessed from the lists of usual names below.
     
     pin_2025_updated_perc = {
         key.replace('_pin_updated', ''): value
@@ -395,7 +395,12 @@ def UPDATE_calculatePIN (country , pin_2025_updated_perc, ocha_data,
     
     pop_group_var = "Population Group"
 
-    mapped_statuses = map_template_to_status(template_values, suggestions_mapping, category_list)
+    if mapped_statuses:
+        # step 1 mapping: groups not given or not in the step 2 tables are skipped ('No match found')
+        mapped_statuses = {template: (mapped_statuses.get(template) if mapped_statuses.get(template) in category_list
+                                      else 'No match found') for template in template_values}
+    else:
+        mapped_statuses = map_template_to_status(template_values, suggestions_mapping, category_list)
     print("---------------------")
     print(mapped_statuses)
     print("---------------------")

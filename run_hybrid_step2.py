@@ -52,7 +52,12 @@ merged_df_delta_all, pin_2025_updated = extrapolate_df_2025_updated(updated_2025
 for note in extrapolation_notes:
     print(f"extrapolation note -- {note['Population group']} {note['Admin Pcode']}: {note['Note']}")
 (Tot_PiN_JIAF, Tot_PiN_by_admin, final_overview_df_OCHA, final_overview_df,
- pin_per_admin_status) = UPDATE_calculatePIN(country, pin_2025_updated, ocha_data, label, selected_language)
+ pin_per_admin_status) = UPDATE_calculatePIN(country, pin_2025_updated, ocha_data, label, selected_language,
+                                              # population groups as mapped in step 1 (not guessed from their names)
+                                              mapped_statuses={'Host/Hôte': cfg["host_value"], 'IDP/PDI': cfg["idp_value"],
+                                                               'Returnees/Retournés': cfg["returnee_value"],
+                                                               'Refugees/Refugiees': cfg["refugee_value"],
+                                                               'Other': cfg["other_value"]})
 
 # --- outputs; the "Parameters Used" sheet is the one of step 1, read from the step 1 file as on the platform
 # (files from before this sheet existed: built from the case settings, which step 1 used)

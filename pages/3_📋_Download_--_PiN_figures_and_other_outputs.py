@@ -12,6 +12,8 @@ from src.calculation_for_PiN_Dimension_NO_OCHA import calculatePIN_NO_OCHA
 from src.calculation_for_PiN_Dimension_NO_OCHA_2025 import calculatePIN_NO_OCHA_2025
 from src.vizualize_PiN import create_output
 from src.vizualize_PiN import parameters_to_df
+from src.vizualize_PiN import pop_groups_from_parameters
+from src.save_parameter import POP_GROUP_LABELS
 from src.output_names import output_name, name_stamp, map_content
 from src.vizualize_PiN import create_indicator_output
 from src.vizualize_PiN import create_indicator_output_no_ocha
@@ -681,6 +683,10 @@ if step_2_hpc and hybrid_country:
 
     ## extrapolate using the delta method
     extrapolation_notes = []   # areas that could not be extrapolated as asked: shown here and in the PiN results
+    # population groups as mapped in step 1 (from the step 1 file, else from page 2 of this session), not guessed from their names
+    step1_groups = pop_groups_from_parameters(st.session_state.get('step1_parameters_df'))
+    if step1_groups is None and any(pop_map.values()):
+        step1_groups = {label_ocha.split(" -- ")[0]: pop_map.get(key) for key, label_ocha in POP_GROUP_LABELS}
     (merged_df_delta_all,pin_2025_updated) = extrapolate_df_2025_updated(updated_2025_pin_file, uploaded_covered_2025_pin, pin2024_cat,
                                                                          notes=extrapolation_notes, selected_language=selected_language)
     if extrapolation_notes:
@@ -688,7 +694,7 @@ if step_2_hpc and hybrid_country:
         st.dataframe(pd.DataFrame(extrapolation_notes), hide_index=True)
 
     ## put together and recalculate the pin BY SEVERITY ONLY
-    (Tot_PiN_JIAF,Tot_PiN_by_admin,final_overview_df_OCHA,final_overview_df, pin_per_admin_status) = UPDATE_calculatePIN (country , pin_2025_updated, ocha_data ,label, selected_language )
+    (Tot_PiN_JIAF,Tot_PiN_by_admin,final_overview_df_OCHA,final_overview_df, pin_per_admin_status) = UPDATE_calculatePIN (country , pin_2025_updated, ocha_data ,label, selected_language, mapped_statuses=step1_groups)
 
 ###################################################################################################################################################
 ###################################################################################################################################################
