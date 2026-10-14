@@ -155,6 +155,13 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat, notes
     # Columns
     severity_cols = [col for col in base_2025.columns if 'severity' in col]
     with_2025_data = has_2025_data(base_2025)
+    # checks of the filled step 1 file (as page 1 on the platform): otherwise areas are dropped without a message
+    if not severity_cols:
+        raise ValueError("The filled step 1 file has no 'severity' columns: every area would be taken as without MSNA data")
+    if not any(col in base_2025.columns for col in stable_cols + delta_cols):
+        raise ValueError("The filled step 1 file has none of the columns to tick (stable, decreased, worsened): "
+                         "were the headers changed?")
+    list_no_tick = []
 
     for idx, row in base_2025.iterrows():
         admin_pcode = row[admin_var]
@@ -178,6 +185,13 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat, notes
                     if col in row and str(row[col]).strip().lower() == 'x':
                         list_delta.append(admin_pcode)
                         break
+                else:
+                    if pd.notna(admin_pcode):   # not the empty rows at the end of the sheet
+                        list_no_tick.append(admin_pcode)
+
+    if list_no_tick:
+        raise ValueError(f"{len(list_no_tick)} area(s) without 2025 MSNA data and no tick (stable, decreased or worsened) "
+                         f"in the filled step 1 file: {', '.join(map(str, list_no_tick))}")
 
     base_2025 = base_2025[~base_2025['Admin Pcode'].isin(list_remove)].copy()
 

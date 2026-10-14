@@ -395,6 +395,7 @@ def UPDATE_calculatePIN (country , pin_2025_updated_perc, ocha_data,
     
     pop_group_var = "Population Group"
 
+    mapped_statuses_given = mapped_statuses or None
     if mapped_statuses:
         # step 1 mapping: groups not given or not in the step 2 tables are skipped ('No match found')
         mapped_statuses = {template: (mapped_statuses.get(template) if mapped_statuses.get(template) in category_list
@@ -406,6 +407,21 @@ def UPDATE_calculatePIN (country , pin_2025_updated_perc, ocha_data,
     print("---------------------")
 
     ocha_by_category = build_ocha_by_category(ocha_data, mapped_statuses)
+
+    # every population group of the step 2 tables must get an OCHA population: a group left out would drop its PiN
+    used = {g for g in mapped_statuses.values() if g != 'No match found'}
+    left_out = [g for g in category_list if g not in used and g not in status_to_be_excluded
+                and not pin_2025_updated_perc[g].empty]
+    no_column = [f"{t} -> {g}" for t, g in mapped_statuses.items() if g != 'No match found' and g not in ocha_by_category]
+    problems = []
+    if left_out:
+        problems.append(f"not mapped to an OCHA population group: {', '.join(map(str, left_out))}"
+                        + (" (the step 1 file does not record its population groups: run step 1 again)"
+                           if mapped_statuses_given is None else ""))
+    if no_column:
+        problems.append(f"no column '<group> -- Children/Enfants (5-17)' in the OCHA file: {', '.join(no_column)}")
+    if problems:
+        raise ValueError("Population groups not used in step 2 -- " + "; ".join(problems))
     ####### ** 5 **       ------------------------------ creating tables with factors for the gender and school-cycle categories ------------------------------------------     #######
     try:
         vector_cycle = COUNTRY_CYCLE_MAP[country]
@@ -462,6 +478,11 @@ def UPDATE_calculatePIN (country , pin_2025_updated_perc, ocha_data,
             # Fetch the corresponding DataFrame from the grouped data
             grouped_df = pin_2025_updated_perc[category]     
             # Merge on specified columns
+            # areas with a PiN but not in the OCHA file would be dropped by the merge: stop instead
+            lost = sorted(set(grouped_df[admin_var].dropna().astype(str)) - set(df[admin_var].dropna().astype(str)))
+            if lost:
+                raise ValueError(f"{category}: {len(lost)} area(s) with a PiN but not in the OCHA file (other code or "
+                                 f"admin level?): {', '.join(lost[:20])}" + (" ..." if len(lost) > 20 else ""))
             pop_group_df = pd.merge(grouped_df, df, on=[admin_var])
             first_col = pop_group_df.columns[0]
             pop_group_df ['Population group'] = category

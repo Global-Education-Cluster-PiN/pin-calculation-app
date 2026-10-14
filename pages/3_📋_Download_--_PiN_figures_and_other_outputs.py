@@ -687,14 +687,18 @@ if step_2_hpc and hybrid_country:
     step1_groups = pop_groups_from_parameters(st.session_state.get('step1_parameters_df'))
     if step1_groups is None and any(pop_map.values()):
         step1_groups = {label_ocha.split(" -- ")[0]: pop_map.get(key) for key, label_ocha in POP_GROUP_LABELS}
-    (merged_df_delta_all,pin_2025_updated) = extrapolate_df_2025_updated(updated_2025_pin_file, uploaded_covered_2025_pin, pin2024_cat,
-                                                                         notes=extrapolation_notes, selected_language=selected_language)
-    if extrapolation_notes:
-        st.warning(translations.get("extrapolation_notes_warning", "{n} area(s) could not be extrapolated as asked: see the 'Extrapolation notes' sheet of the PiN results.").format(n=len(extrapolation_notes)))
-        st.dataframe(pd.DataFrame(extrapolation_notes), hide_index=True)
+    try:
+        (merged_df_delta_all,pin_2025_updated) = extrapolate_df_2025_updated(updated_2025_pin_file, uploaded_covered_2025_pin, pin2024_cat,
+                                                                             notes=extrapolation_notes, selected_language=selected_language)
+        if extrapolation_notes:
+            st.warning(translations.get("extrapolation_notes_warning", "{n} area(s) could not be extrapolated as asked: see the 'Extrapolation notes' sheet of the PiN results.").format(n=len(extrapolation_notes)))
+            st.dataframe(pd.DataFrame(extrapolation_notes), hide_index=True)
 
-    ## put together and recalculate the pin BY SEVERITY ONLY
-    (Tot_PiN_JIAF,Tot_PiN_by_admin,final_overview_df_OCHA,final_overview_df, pin_per_admin_status) = UPDATE_calculatePIN (country , pin_2025_updated, ocha_data ,label, selected_language, mapped_statuses=step1_groups)
+        ## put together and recalculate the pin BY SEVERITY ONLY
+        (Tot_PiN_JIAF,Tot_PiN_by_admin,final_overview_df_OCHA,final_overview_df, pin_per_admin_status) = UPDATE_calculatePIN (country , pin_2025_updated, ocha_data ,label, selected_language, mapped_statuses=step1_groups)
+    except ValueError as error:   # checks of the step 2 inputs: a population group or area would be left out
+        st.error(str(error))
+        st.stop()
 
 ###################################################################################################################################################
 ###################################################################################################################################################
