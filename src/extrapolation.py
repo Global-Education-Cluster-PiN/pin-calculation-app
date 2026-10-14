@@ -397,6 +397,12 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat, notes
                 ref = row.get("admin_ref")
                 add_note(category, row["Admin Pcode"], ref, "no_reference_data" if isinstance(ref, str) and ref else "no_reference")
 
+        if not new_cols:
+            # no area of this group could be extrapolated (e.g. none has 2024 PiN): nothing to add for the group
+            pin_2025_delta[category] = pd.DataFrame()
+            merged_df_delta_all[category] = df
+            continue
+
         # Select only first column + last 4 normalized severity columns
         first_col = df.columns[0]
         final_cols = [
