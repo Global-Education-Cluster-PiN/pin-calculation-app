@@ -337,6 +337,56 @@ def adjust_pin_by_strata_factor(pin_df, factor_df, category_label, tot_column, a
 
 
 ##--------------------------------------------------------------------------------------------
+# Girls and boys PiN from their own severity, consistent with the total PiN.
+# For each admin and population group, the # of girls and boys at each severity level (girls' and boys' severity x their
+# OCHA population) is adjusted by iterative proportional fitting, so that girls + boys = the total # at each level and
+# girls (boys) add up to their OCHA population. Admins without girls or without boys in the sample keep the population
+# split (pin_girl / pin_boy, the total PiN x the girls/boys share of the OCHA population).
+def gender_pin_from_severity(pin_per_admin_status, female_pin, male_pin, pin_girl, pin_boy, admin_var, iterations=100):
+    level_cols = [label_tot2, label_tot3, label_tot4, label_tot5]
+    perc_cols = [label_perc2, label_perc3, label_perc4, label_perc5]
+    girls_out, boys_out = {}, {}
+    for category, total_df in pin_per_admin_status.items():
+        girl_df = pin_girl[category].copy()
+        boy_df = pin_boy[category].copy()
+        if category not in female_pin or category not in male_pin:
+            girls_out[category], boys_out[category] = girl_df, boy_df
+            continue
+        total = total_df.set_index(admin_var)
+        female = female_pin[category].set_index(admin_var)
+        male = male_pin[category].set_index(admin_var)
+        girl_idx = girl_df.set_index(admin_var)
+        boy_idx = boy_df.set_index(admin_var)
+        for admin in total.index:
+            if admin not in female.index or admin not in male.index:
+                continue   # one sex without children in the sample: population split
+            seed = np.array([female.loc[admin, level_cols].astype(float).values,
+                             male.loc[admin, level_cols].astype(float).values])
+            col_target = total.loc[admin, level_cols].astype(float).values
+            row_target = np.array([girl_idx.loc[admin, label_tot_population], boy_idx.loc[admin, label_tot_population]], dtype=float)
+            if row_target.sum() <= 0 or col_target.sum() <= 0 or np.any((seed.sum(axis=0) == 0) & (col_target > 0)):
+                continue   # nothing to split, or a level with PiN but no girl or boy at it: population split
+            row_target = row_target * col_target.sum() / row_target.sum()   # OCHA girls + boys may differ slightly from the total
+            fitted = seed.copy()
+            # the levels are fitted last, so girls + boys always equal the total; when both targets cannot be met
+            # (e.g. more PiN at a level than girls in the admin), girls and boys differ slightly from their population
+            for _ in range(iterations):
+                row_sum = fitted.sum(axis=1)
+                fitted = fitted * np.divide(row_target, row_sum, out=np.zeros_like(row_sum), where=row_sum > 0)[:, None]
+                col_sum = fitted.sum(axis=0)
+                fitted = fitted * np.divide(col_target, col_sum, out=np.zeros_like(col_sum), where=col_sum > 0)
+                if np.allclose(fitted.sum(axis=1), row_target, rtol=1e-9, atol=1e-6):
+                    break
+            for idx, values in ((girl_idx, fitted[0]), (boy_idx, fitted[1])):
+                idx.loc[admin, level_cols] = values
+                tot_n = idx.loc[admin, label_tot_population]
+                idx.loc[admin, perc_cols] = values / tot_n if tot_n > 0 else 0
+        girls_out[category] = girl_idx.reset_index()[girl_df.columns]
+        boys_out[category] = boy_idx.reset_index()[boy_df.columns]
+    return girls_out, boys_out
+
+
+##--------------------------------------------------------------------------------------------
 # preparation for overview--> SUM all the admin per population group and per strata 
 def collapse_and_summarize(pin_per_admin_status_strata, category_str, admin_var):
     collapsed_results = {}
@@ -1873,6 +1923,11 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
         pin_per_admin_status_upper_primary[category] = adjust_pin_by_strata_factor(df, factor_category[category_upper_primary], category_upper_primary, tot_column= label_tot_population, admin_var=admin_var)
         pin_per_admin_status_secondary[category] = adjust_pin_by_strata_factor(df, factor_category[category_secondary], category_secondary, tot_column= label_tot_population, admin_var=admin_var)
         pin_per_admin_status_disabilty[category] = adjust_pin_by_strata_factor(df, factor_category[category_disability], category_disability, tot_column= label_tot_population, admin_var=admin_var)
+
+    # girls and boys PiN from their own severity (not the population split), adjusted to the total PiN
+    pin_per_admin_status_girl, pin_per_admin_status_boy = gender_pin_from_severity(
+        pin_per_admin_status, female_pin_per_admin_status, male_pin_per_admin_status,
+        pin_per_admin_status_girl, pin_per_admin_status_boy, admin_var)
 
 
     ####### ** 8.0 **       ------------------------------ aggregagte the popupulation group pin in 1 output by admin ------------------------------------------     #######
