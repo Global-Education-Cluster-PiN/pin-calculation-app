@@ -367,7 +367,7 @@ def add_indicator_columns_for_EMIS(data, access_var, teacher_disruption_var, nat
 
     if natural_hazard_var != no_indicator:
         data['var.hazard'] = data.apply(
-            lambda row: 1 if row['severity_category'] not in [4, 5] and row[teacher_disruption_var] != 1 and normalize(row[natural_hazard_var]) in yes_answers else 0, axis=1
+            lambda row: 1 if row['severity_category'] not in [4, 5] and (teacher_disruption_var == no_indicator or row[teacher_disruption_var] != 1) and normalize(row[natural_hazard_var]) in yes_answers else 0, axis=1
         )
 
     if idp_disruption_var != no_indicator:
@@ -718,8 +718,8 @@ def add_severity(country,
         natural_hazard_severity= natural_hazard_var_sev if natural_hazard_var != 'no_indicator' else None, 
         additional_ind_severity=additional_last_sev if additional_last_var != 'no_indicator' else None,
         additional_2_ind_severity=additional_2_last_sev if additional_2_last_var != 'no_indicator' else None, 
-        idp_disruption=row[idp_disruption_var], 
-        teacher_disruption=row[teacher_disruption_var], 
+        idp_disruption=row[idp_disruption_var] if idp_disruption_var != 'no_indicator' else None,
+        teacher_disruption=row[teacher_disruption_var] if teacher_disruption_var != 'no_indicator' else None,
         #protection_at_school=row['e_incident_ecol'] if country == 'Burkina Faso -- BFA'  else None,
         #protection_to_school=row['e_incident_trajet'] if country == 'Burkina Faso -- BFA'  else None,
         names_severity_4=names_severity_4, 
