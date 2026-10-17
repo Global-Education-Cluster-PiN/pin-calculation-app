@@ -1087,6 +1087,22 @@ def calculate_prop(df, admin_var, pop_group_var, target_var, agg_var='weights', 
 
     return overall
 
+##--------------------------------------------------------------------------------------------
+def empty_prop_table(all_df, admin_var, pop_group_var, target_var, country=None):
+    """
+    Result of calculate_prop for a subset without children (e.g. no child of secondary-school age):
+    no rows, the same index levels as calculate_prop, and the categories of `target_var` in all the
+    data as columns, so that the next steps find the columns they expect.
+    """
+    OVERALL_COUNTRIES = {'Haiti -- HTI', 'Sudan -- SDN', 'Democratic Republic of the Congo -- DRC', 'South Sudan -- SSD'}
+    keys = [admin_var] if country in OVERALL_COUNTRIES else [admin_var, pop_group_var]
+    categories = sorted(all_df[target_var].dropna().unique(), key=str)
+    return pd.DataFrame(
+        index=pd.MultiIndex.from_arrays([[]] * (2 * len(keys)), names=keys * 2),
+        columns=pd.MultiIndex.from_product([['total_weight'], categories], names=[None, target_var]),
+        dtype=float,
+    )
+
 ##--------------------------------------------------------------------------------------------   -----------------------------------
 def find_matching_choices(choices_df, barriers_list, label_var):
     # List to hold the results
@@ -1388,13 +1404,16 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
         for analysis_var, config in analysis_config.items():
             source_df = config['df']
             target_var = config['target_var']
-            results_dict[analysis_var] = calculate_prop(
-                df=source_df,
-                admin_var=admin_var,
-                pop_group_var=pop_group_var,
-                target_var=target_var,
-                country=country
-            )    
+            if source_df.empty:   # no child in this subset (e.g. none of secondary-school age): empty table
+                results_dict[analysis_var] = empty_prop_table(df, admin_var, pop_group_var, target_var, country)
+            else:
+                results_dict[analysis_var] = calculate_prop(
+                    df=source_df,
+                    admin_var=admin_var,
+                    pop_group_var=pop_group_var,
+                    target_var=target_var,
+                    country=country
+                )
             print(results_dict[analysis_var])
         # Reduce the index for all results
         for key in results_dict:
