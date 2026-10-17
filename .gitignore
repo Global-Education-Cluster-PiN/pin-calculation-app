@@ -8,3 +8,4 @@ __pycache__/
 input_map/old/
 input/
 logs/
+*.code-workspace
