@@ -586,7 +586,12 @@ def add_severity(country,
                 start_school,
                 status_var,
                 selected_language,
-                full_GEC_compliant):
+                full_GEC_compliant,
+                barrier_match="label",
+                stop_if_barrier_missing=False):
+    # barrier_match: column of the choices sheet the severity 4/5 barriers are matched on: "label" (the `label`
+    # column, as listed on the platform) or "name" (the choice names, local runs). stop_if_barrier_missing: stop
+    # when a barrier is not found in that column (local runs), instead of leaving it out
 
     admin_target = admin_var
     pop_group_var = status_var
@@ -694,8 +699,17 @@ def add_severity(country,
 
     ####### ** 2 **       ------------------------------ severity definition and calculation ------------------------------------------     #######
    
-    severity_4_matches = find_matching_choices(choice_data, selected_severity_4_barriers, label_var=label)
-    severity_5_matches = find_matching_choices(choice_data, selected_severity_5_barriers, label_var=label)
+    if barrier_match not in ("label", "name"):
+        raise ValueError(f"barrier_match must be 'label' or 'name', not {barrier_match!r}")
+    match_column = label if barrier_match == "label" else "name"
+    severity_4_matches = find_matching_choices(choice_data, selected_severity_4_barriers, label_var=match_column)
+    severity_5_matches = find_matching_choices(choice_data, selected_severity_5_barriers, label_var=match_column)
+    missing_barriers = [entry['label'] for entry in severity_4_matches + severity_5_matches if entry['name'] == 'notfound']
+    if missing_barriers and stop_if_barrier_missing:
+        raise ValueError(
+            f"Severity 4/5 barriers not found in the column '{match_column}' of the choices sheet: "
+            + ", ".join(repr(b) for b in missing_barriers)
+            + ". Check their spelling, or set \"barrier_match\" ('label' or 'name') in run_config.py.")
     print('severity_4_matches =======> ')
     print(selected_severity_4_barriers)
     print(severity_4_matches)
