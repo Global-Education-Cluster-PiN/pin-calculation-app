@@ -2,12 +2,434 @@
 # Pick the case to run with ACTIVE_CASE; add new countries/years as new keyed entries.
 # To run several cases in a row, list them in RUN_CASES and run run_all_cases.py.
 
-ACTIVE_CASE = "AFG_2026_no_ban_admin1-2"                         # single run
-RUN_CASES = ["AFG_2026_no_ban", "AFG_2026_limited_ban", "AFG_2026_full_ban"]    # batch run (run_all_cases.py)
+ACTIVE_CASE = "DRC_2023"                        # single run
+RUN_CASES = ["DRC_2023", "DRC_2026","DRC_2025"] #,"DRC_2023"]    # batch run (run_all_cases.py)
 ARCHIVE_INPUTS = True    # True: copy the Assessment dataset and the OCHA file into each successful run's archive zip; False: store only their checksums
 
 CASES = {
-     "CAR_2026_fr": {
+
+    "DRC_2026": {
+        # from cases_coutry_helpers.py lines 406-469 ("## DRC")
+        # --- general
+        "country": 'Democratic Republic of the Congo -- DRC',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": 'French',
+        "label": 'label::french (fr)',
+        "start_school": 'September',
+        "admin_var": 'Admin_3: Sectors/chiefdoms/communes',
+        "vector_cycle": [11, 13],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 6,
+        # "secondary_end": 17,
+        "hybrid_country": False,  # not set in original: default
+        "mismatch_admin": False,
+        "no_ocha_data": False,  # not set in original: default
+
+        # --- input files
+        "excel_data_path": 'input/COD/COD_MSNA_2026_edu_data.xlsx',
+        "excel_path_ocha": 'input/COD/COD_Population_figures_no_pop_groups.xlsx',
+        "sheets": {
+            "household": 'main',
+            "edu": 'edu_ind',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        # TODO: fill in before running (the script stops if all five are None)
+        "host_value": 'host', #Host
+        "idp_value": None, #IDP in sites
+        "returnee_value": None,
+        "refugee_value": None,
+        "other_value": None, #IDP dans des Famille d'acueille
+
+        # --- Assessment variables
+        "status_var": 'pop_group',
+        "access_var": 'edu_access',
+        "teacher_disruption_var": 'edu_disrupted_teacher',
+        "idp_disruption_var": 'edu_disrupted_displaced',
+        "armed_disruption_var": 'edu_disrupted_attack',
+        "natural_hazard_var": 'edu_disrupted_hazards',
+        "natural_hazard_var_sev": 3,  # not set in original: default
+        "additional_last_var": 'no_indicator',  # not set in original: default
+        "additional_last_sev": None,  # not set in original: default
+        "additional_2_last_var": 'no_indicator',  # not set in original: default
+        "additional_2_last_sev": None,  # not set in original: default
+        "barrier_var": 'edu_barrier',
+        "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name"; labels (as on the platform): "label" (default)
+        "age_var": 'edu_ind_age',
+        "gender_var": 'edu_ind_gender',
+
+        # --- barrier severity
+        "selected_severity_4_barriers": [
+            "child_work_home",
+            "child_work_outside",
+            "protection_at_school",
+            "protection_travel_school",
+            "child_marriage",
+            "enroll_lack_documentation",
+            "enroll_displacement",
+            "discrimination",
+            "school_closed",
+        ],
+        "selected_severity_5_barriers": [
+            "child_pregnancy",
+            "child_armed_group",
+            "ban",
+        ],
+    },
+
+    "DRC_2025": {
+        # from cases_coutry_helpers.py lines 406-469 ("## DRC")
+        # --- general
+        "country": 'Democratic Republic of the Congo -- DRC',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": 'French',
+        "label": 'label',
+        "start_school": 'September',
+        "admin_var": 'Admin_3: Sectors/chiefdoms/communes',
+        "vector_cycle": [11, 13],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 6,
+        # "secondary_end": 17,
+        "hybrid_country": False,  # not set in original: default
+        "mismatch_admin": False,
+        "no_ocha_data": False,  # not set in original: default
+
+        # --- input files
+        "excel_data_path": 'input/COD/COD_MSNA_2025_edu_data.xlsx',
+        "excel_path_ocha": 'input/COD/COD_Population_figures_with_pop_groups.xlsx',
+        "sheets": {
+            "household": 'main',
+            "edu": 'edu_ind',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        # TODO: fill in before running (the script stops if all five are None)
+        "host_value": 'Hote', #Host
+        "idp_value": 'PDI_Site', #IDP in sites
+        "returnee_value": 'Retourne',
+        "refugee_value": None,
+        "other_value": 'PDI_FA', #IDP dans des Famille d'acueille
+
+        # --- Assessment variables
+        "status_var": 'pop_group',
+        "access_var": 'edu_access',
+        "teacher_disruption_var": 'edu_disrupted_teacher',
+        "idp_disruption_var": 'edu_disrupted_displaced',
+        "armed_disruption_var": 'edu_disrupted_attack',
+        "natural_hazard_var": 'edu_disrupted_hazards',
+        "natural_hazard_var_sev": 3,  # not set in original: default
+        "additional_last_var": 'no_indicator',  # not set in original: default
+        "additional_last_sev": None,  # not set in original: default
+        "additional_2_last_var": 'no_indicator',  # not set in original: default
+        "additional_2_last_sev": None,  # not set in original: default
+        "barrier_var": 'edu_barrier',
+        "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name"; labels (as on the platform): "label" (default)
+        "age_var": 'edu_ind_age',
+        "gender_var": 'edu_ind_gender',
+
+        # --- barrier severity
+        "selected_severity_4_barriers": [
+            "discrimination",
+            "enroll_displacement",
+            "enroll_lack_documentation",
+            "school_closed_natural",
+            "school_closed_conflict",
+            "school_closed_other",
+            "child_work_home",
+            "child_work_outside",
+            "child_marriage",
+            "protection_at_school",
+            "protection_travel_school",
+        ],
+        "selected_severity_5_barriers": [
+            "child_pregnancy",
+            "child_armed_group",
+            "ban",
+        ],
+    },
+
+    "DRC_2024": {
+        # from cases_coutry_helpers.py lines 406-469 ("## DRC")
+        # --- general
+        "country": 'Democratic Republic of the Congo -- DRC',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": 'French',
+        "label": 'label',
+        "start_school": 'September',
+        "admin_var": 'Admin_3: Sectors/chiefdoms/communes',
+        "vector_cycle": [11, 13],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 6,
+        # "secondary_end": 17,
+        "hybrid_country": False,  # not set in original: default
+        "mismatch_admin": False,
+        "no_ocha_data": False,  # not set in original: default
+
+        # --- input files
+        "excel_data_path": 'input/REACH_DRC2404_MSNA2024_Clean-Data.xlsx',
+        "excel_path_ocha": 'input/DRC_ocha.xlsx',
+        "sheets": {
+            "household": 'hh_data',
+            "edu": 'edu_data',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        # TODO: fill in before running (the script stops if all five are None)
+        "host_value": None,
+        "idp_value": None,
+        "returnee_value": None,
+        "refugee_value": None,
+        "other_value": None,
+
+        # --- Assessment variables
+        "status_var": 'hoh_dis',
+        "access_var": 'edu_access',
+        "teacher_disruption_var": 'edu_disrupted_teacher',
+        "idp_disruption_var": 'edu_disrupted_displaced',
+        "armed_disruption_var": 'edu_disrupted_hazards',
+        "natural_hazard_var": 'edu_disrupted_hazards',
+        "natural_hazard_var_sev": None,  # not set in original: default
+        "additional_last_var": 'no_indicator',  # not set in original: default
+        "additional_last_sev": None,  # not set in original: default
+        "additional_2_last_var": 'no_indicator',  # not set in original: default
+        "additional_2_last_sev": None,  # not set in original: default
+        "barrier_var": 'edu_barrier',
+        "age_var": 'edu_ind_age',
+        "gender_var": 'edu_ind_gender',
+
+        # --- barrier severity
+        "selected_severity_4_barriers": [
+            'Risques de protection à l’école (tels que le harcèlement physique et verbal, risque de viol, les attaques contre les écoles ou d’autres incidents de protection)',
+            'Risques de protection pendant le trajet vers l’école (tels que les incidents de harcèlement physique et verbal, risque de viol ou d’autres incidents de protection)',
+        ],
+        "selected_severity_5_barriers": [
+            "L'enfant est associé à des forces armées ou à des groupes armés",
+        ],
+    },
+
+    "DRC_2023": {
+        # from cases_coutry_helpers.py lines 470-535 ("## DRC-2")
+        # '## DRC-2' block: Assessment 2023 data with DRC_ocha_2025
+        # --- general
+        "country": 'Democratic Republic of the Congo -- DRC',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": 'French',
+        "label": 'label',
+        "start_school": 'September',
+        "admin_var": 'Admin_3: Sectors/chiefdoms/communes',
+        "vector_cycle": [11, 13],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 6,
+        # "secondary_end": 17,
+        "hybrid_country": False,  # not set in original: default
+        "mismatch_admin": False,
+        "no_ocha_data": False,  # not set in original: default
+
+        # --- input files
+        "excel_data_path": 'input/COD/COD_MSNA_2023_edu_data.xlsx',
+        "excel_path_ocha": 'input/COD/COD_Population_figures_with_pop_groups.xlsx',
+        "sheets": {
+            "household": 'main',
+            "edu": 'edu_ind',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        # TODO: fill in before running (the script stops if all five are None)
+        "host_value": 'Hote', #Host
+        "idp_value": 'PDI_Site', #IDP in sites
+        "returnee_value": 'Retourne',
+        "refugee_value": None,
+        "other_value": 'PDI_FA', #IDP dans des Famille d'acueille
+
+        # --- Assessment variables
+        "status_var": 'pop_group',
+        "access_var": 'edu_access',
+        "teacher_disruption_var": 'edu_disruption_teacher',
+        "idp_disruption_var": 'no_indicator', # The code 'edu_disruption_displaced' is used, but the questions is about safe displacement towards or form the school: "l'enfant a pu se rendre à l'école en toute sécurité et apprendre dans des conditions sûres à l'école ?"
+        "armed_disruption_var": 'no_indicator',
+        "natural_hazard_var": 'edu_disruption_hazard',
+        "natural_hazard_var_sev": 3,  # not set in original: default
+        "additional_last_var": 'no_indicator',  # not set in original: default
+        "additional_last_sev": None,  # not set in original: default
+        "additional_2_last_var": 'no_indicator',  # not set in original: default
+        "additional_2_last_sev": None,  # not set in original: default
+        "barrier_var": 'edu_barrier',
+        "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name"; labels (as on the platform): "label" (default)
+        "age_var": 'age_years',
+        "gender_var": 'ind_gender',
+
+        # --- barrier severity
+        "selected_severity_4_barriers": [
+            "risque_pro_trajet",
+            "risque_pro",
+            "enfant_maison",
+            "impossible_inscri",
+            "mariage_grossesse",
+        ],
+        "selected_severity_5_barriers": [
+            'recrutement_ga',
+        ],
+    },
+
+    "BFA_2025": {
+        # from cases_coutry_helpers.py lines 148-209 ("## BFA")
+        # --- general
+        "country": 'Burkina Faso -- BFA',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": 'French',  # not set in original: default — check
+        "label": 'label::French',
+        "start_school": 'September',
+        "admin_var": 'Admin_3: Department (Département)',
+        "vector_cycle": [10, 14],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 6,
+        # "secondary_end": 17,
+        "hybrid_country": True,  # not set in original: default
+        "mismatch_admin": True,
+        "no_ocha_data": False,  # not set in original: default
+
+        # --- input files
+        "excel_data_path": 'input/BFA/REACH I BFA I 2025 MSNA-eduPlatform.xlsx',
+        "excel_path_ocha": 'input/BFA/BFA_ocha_FINAL_20261015_Admin2.xlsx',
+        "sheets": {
+            "household": 'main',
+            "edu": 'indvidual', #yes, there is a typo
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        # TODO: fill in before running (the script stops if all five are None)
+        "host_value": "non_pdi",
+        "idp_value": "pdi",
+        "returnee_value": None,
+        "refugee_value": None,
+        "other_value": None,
+
+        # --- Assessment variables
+        "status_var": 'pop_group',
+        "access_var": 'edu_access',
+        "teacher_disruption_var": 'edu_teachers',
+        "idp_disruption_var": 'edu_displaced',
+        "armed_disruption_var": 'no_indicator',
+        "natural_hazard_var": 'edu_hazards',  # not set in original: default
+        "natural_hazard_var_sev": 3,  # not set in original: default
+        "additional_last_var": 'edu_incident_trajet',
+        "additional_last_sev": 4,
+        "additional_2_last_var": 'edu_incident_ecol',
+        "additional_2_last_sev": 4,  # not set in original: default
+        "barrier_var": 'edu_barriers',
+        "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name"; labels (as on the platform): "label" (default)
+        "age_var": 'sne_enfant_ind_age',
+        "gender_var": 'sne_enfant_ind_gender',
+
+        # --- barrier severity
+        "selected_severity_4_barriers": [
+            "fermeture_ecole",
+            "risque_protection",
+            "risque_protection_trajet",
+            "grossesse",
+            "participation_agr",
+            "mariage",
+        ],
+        "selected_severity_5_barriers": [
+            "interdiction",
+        ],
+    },
+
+    "MOZ_IOM_2026": {
+        # --- general
+        "country": "Mozambique -- MOZ",
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": "English",
+        "label": "label::English",
+        "start_school": "September",
+        "admin_var": "Admin_2: Districts (qaḍya)",   
+        "vector_cycle": [11, 14],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 7,
+        # "secondary_end": 17,
+        # "step_2_hpc": False,
+        "hybrid_country": False,           # True = hybrid country: French labels are not translated in calculatePIN
+        "mismatch_admin": False,
+        "no_ocha_data": False,
+
+        # --- input files
+        "excel_data_path": "input/LBN/REACH_LBN_Dataset_MSNA_2026_edu.xlsx",
+        "excel_path_ocha": "input/LBN/LBN_MSNA_pop.xlsx",
+        
+        "sheets": {
+            "household": "clean_main",
+            "edu": "clean_edu",
+            "survey": "survey",
+            "choices": "choices",
+            "ocha": "ocha",
+            "scope_fix": "scope-fix",
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        "host_value": "lebanese",
+        "idp_value": None,
+        "returnee_value": None ,
+        "refugee_value": "palestinian",
+        "other_value": "migrant",
+
+        # --- Assessment variables
+        "status_var": "pop_group",
+        "age_var": "edu_ind_age",
+        "gender_var": "edu_ind_gender",
+        "access_var": "edu_access",
+        "teacher_disruption_var": "edu_disrupted_teacher",
+        "idp_disruption_var": "edu_disrupted_displaced",
+        "natural_hazard_var": "edu_disrupted_hazards",
+        "natural_hazard_var_sev": 4,
+        "armed_disruption_var": 'edu_disrupted_attack',
+        "additional_last_var": "edu_disrupted_occupied_armed_forces",
+        "additional_last_sev": 4,
+        "additional_2_last_var": "no_indicator",
+        "additional_2_last_sev": None,
+        "barrier_var": "edu_barrier",
+
+        # --- barrier severity
+        "selected_severity_4_barriers": ['The child needs to work at home or on the household’s farm without earning an income, including to allow other household members to undertake income-generating activities',
+                'The child is engaged in income-generating activities outside the home',
+                'The child faces protection risks at school',
+                'The child faces protection risks while travelling to or from school',
+                'The child is married or engaged',
+                'The school is closed due to damage, a natural disaster, or conflict',
+                'The child is experiencing discrimination or stigmatisation',
+                'A restriction or ban will prevent the child from attending school'],
+
+        "selected_severity_5_barriers": ['The child is associated with armed forces or armed groups',
+                'The child is pregnant',
+                'The child can not enrol due to a lack of documentation'],
+    },
+
+     "CAR_2026_fr_admin1": {
         # from cases_coutry_helpers.py lines 660-725 ("## CAR")
         # second '## CAR' block
         # --- general
@@ -16,7 +438,7 @@ CASES = {
         "selected_language": 'French',
         "label": 'label::Français (fr)',
         "start_school": 'September',
-        "admin_var": 'Admin_2: Sub-prefectures (sous-préfectures)',
+        "admin_var": 'Admin_1: Prefectures (préfectures)',
         "vector_cycle": [12, 16],
         # TODO: add later — not used by the run script yet
         # "primary_start": 6,
@@ -27,7 +449,7 @@ CASES = {
 
         # --- input files
         "excel_data_path": 'input/CAF/CAF_MSNA_edu_data.xlsx',
-        "excel_path_ocha": 'input/CAF/CAF_Population_figures.xlsx',
+        "excel_path_ocha": 'input/CAF/CAF_Population_figures_admin1.xlsx',
         "sheets": {
             "household": 'main',
             "edu": 'edu_ind',
@@ -59,21 +481,98 @@ CASES = {
         "additional_2_last_var": 'no_indicator',  # not set in original: default
         "additional_2_last_sev": None,  # not set in original: default
         "barrier_var": 'edu_barrier',
+        "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name"; labels (as on the platform): "label" (default)
         "age_var": 'edu_ind_age',
         "gender_var": 'edu_ind_gender',
 
         # --- barrier severity
         "selected_severity_4_barriers": [
-            "L'enfant doit travailler à la maison ou dans la ferme du ménage, c'est-à-dire qu'il ne gagne pas de revenu pour ces activités, mais peut permettre à d'autres membres de la famille de gagner un revenu"
-            "L'enfant participe à des activités génératrices de revenus en dehors du foyer",
-            "Risques de protection à l'école ",
-            "Risques de protection pendant le trajet vers l'école ", #Do  not remove the ending space
-            "Mariage ou fiançailles",
-            "L'école a été fermée en raison de dommages, d'une catastrophe naturelle ou d'un conflit",
+                "child_work_home",
+                "child_work_outside",
+                "protection_at_school",
+                "protection_travel_school",
+                "child_marriage",
+                "school_closed",
         ],
         "selected_severity_5_barriers": [
-            "L'enfant est associé à des forces armées ou à des groupes armés ",
-            "Grossesse",
+            "child_armed_group",
+            "child_pregnancy",
+        ],
+    },
+
+     "CAR_2026_fr_admin2": {
+        # from cases_coutry_helpers.py lines 660-725 ("## CAR")
+        # second '## CAR' block
+
+        "step_2_hpc": True,              # True = step 2 (run_hybrid_step2.py)
+        "updated_pin_path": "input/CAF/CAR_PiN2026_step1_to-fill_filled.xlsx",
+        "covered_pin_path": "output_validation/CAR/CAR_2026_fr_admin2/CAR_PiN2026_step1_covered-areas_*.xlsx",
+
+
+        "country": 'Central African Republic -- CAR',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": 'French',
+        "label": 'label::Français (fr)',
+        "start_school": 'September',
+        "admin_var": 'Admin_2: Sub-prefectures (sous-préfectures)',
+        "vector_cycle": [12, 16],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 6,
+        # "secondary_end": 17,
+        "hybrid_country": True,  # not set in original: default
+        "mismatch_admin": False,
+        "no_ocha_data": False,  # not set in original: default
+
+        # --- input files
+        "excel_data_path": 'input/CAF/CFA_MSNA_edu_data.xlsx',
+        "excel_path_ocha": 'input/CAF/CAF_Population_figures_admin2.xlsx',
+        "sheets": {
+            "household": 'main',
+            "edu": 'edu_ind',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        # TODO: fill in before running (the script stops if all five are None)
+        "host_value": 'hote',
+        "idp_value": 'idp_site',
+        "returnee_value": 'retourne',
+        "refugee_value": None,
+        "other_value": 'idp_host' ,
+
+        # --- Assessment variables
+        "status_var": 'pop_group',
+        "access_var": 'edu_access',
+        "teacher_disruption_var": 'edu_disrupted_teacher',
+        "idp_disruption_var": 'edu_disrupted_displaced',
+        "armed_disruption_var": 'edu_disrupted_attack',
+        "natural_hazard_var": 'edu_disrupted_hazards',
+        "natural_hazard_var_sev": 3,  # not set in original: default
+        "additional_last_var": 'no_indicator',  # not set in original: default
+        "additional_last_sev": None,  # not set in original: default
+        "additional_2_last_var": 'no_indicator',  # not set in original: default
+        "additional_2_last_sev": None,  # not set in original: default
+        "barrier_var": 'edu_barrier',
+        "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name"; labels (as on the platform): "label" (default)
+        "age_var": 'edu_ind_age',
+        "gender_var": 'edu_ind_gender',
+
+         # --- barrier severity
+        "selected_severity_4_barriers": [
+                "child_work_home",
+                "child_work_outside",
+                "protection_at_school",
+                "protection_travel_school",
+                "child_marriage",
+                "school_closed",
+        ],
+        "selected_severity_5_barriers": [
+            "child_armed_group",
+            "child_pregnancy",
         ],
     },
 
@@ -491,20 +990,20 @@ CASES = {
         "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
         "selected_language": "English",
         "label": "label::english",
-        "start_school": "October",
+        "start_school": "September",
         "admin_var": "Admin_2: Districts",
         "vector_cycle": [13, 0],
         # TODO: add later — not used by the run script yet
         # "primary_start": 7,
         # "secondary_end": 17,
-        "hybrid_country": True,           # True = hybrid country: French labels are not translated in calculatePIN
+        "hybrid_country": False,           # True = hybrid country: French labels are not translated in calculatePIN
         "step_2_hpc": False,              # hybrid countries: False = step 1 (run_PiNcalculation_outside_streamlit.py); True = step 2 (run_hybrid_step2.py)
         "mismatch_admin": False,
         "no_ocha_data": False,
 
         # --- input files
         "excel_data_path": "input/SOM/SOM_MSNA_ALL_edu_data.xlsx",
-        "excel_path_ocha": "input/SOM/SOM_Population_figures_filled.xlsx",
+        "excel_path_ocha": "input/SOM/SOM_Population_figures_filled_v2.xlsx",
         # step 2 inputs: the step 1 "step1_to-fill" file once filled (copy it to input/ first, so that it stays with the
         # inputs) and the step 1 "step1_covered-areas" file; a * stands for the newest matching file
         "updated_pin_path": "input/SOM/SOM_PiN2026_step1_to-fill_filled.xlsx",
@@ -1035,138 +1534,6 @@ CASES = {
         ],
     },
 
-    "DRC_2024": {
-        # from cases_coutry_helpers.py lines 406-469 ("## DRC")
-        # --- general
-        "country": 'Democratic Republic of the Congo -- DRC',
-        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
-        "selected_language": 'French',
-        "label": 'label::french',
-        "start_school": 'September',
-        "admin_var": 'Admin_3: Sectors/chiefdoms/communes',
-        "vector_cycle": [12, 16],
-        # TODO: add later — not used by the run script yet
-        # "primary_start": 6,
-        # "secondary_end": 17,
-        "hybrid_country": False,  # not set in original: default
-        "mismatch_admin": False,
-        "no_ocha_data": False,  # not set in original: default
-
-        # --- input files
-        "excel_data_path": 'input/REACH_DRC2404_MSNA2024_Clean-Data.xlsx',
-        "excel_path_ocha": 'input/DRC_ocha.xlsx',
-        "sheets": {
-            "household": 'hh_data',
-            "edu": 'edu_data',
-            "survey": 'survey',
-            "choices": 'choices',
-            "ocha": 'ocha',
-            "scope_fix": 'scope-fix',
-        },
-        "output_dir": "output_validation",
-
-        # --- population-group mapping (page 2): values from your status column, None if the group is not present
-        # TODO: fill in before running (the script stops if all five are None)
-        "host_value": None,
-        "idp_value": None,
-        "returnee_value": None,
-        "refugee_value": None,
-        "other_value": None,
-
-        # --- Assessment variables
-        "status_var": 'hoh_dis',
-        "access_var": 'edu_access',
-        "teacher_disruption_var": 'edu_disrupted_teacher',
-        "idp_disruption_var": 'edu_disrupted_displaced',
-        "armed_disruption_var": 'edu_disrupted_hazards',
-        "natural_hazard_var": 'edu_disrupted_hazards',
-        "natural_hazard_var_sev": None,  # not set in original: default
-        "additional_last_var": 'no_indicator',  # not set in original: default
-        "additional_last_sev": None,  # not set in original: default
-        "additional_2_last_var": 'no_indicator',  # not set in original: default
-        "additional_2_last_sev": None,  # not set in original: default
-        "barrier_var": 'edu_barrier',
-        "age_var": 'edu_ind_age',
-        "gender_var": 'edu_ind_gender',
-
-        # --- barrier severity
-        "selected_severity_4_barriers": [
-            'Risques de protection à l’école (tels que le harcèlement physique et verbal, risque de viol, les attaques contre les écoles ou d’autres incidents de protection)',
-            'Risques de protection pendant le trajet vers l’école (tels que les incidents de harcèlement physique et verbal, risque de viol ou d’autres incidents de protection)',
-        ],
-        "selected_severity_5_barriers": [
-            "L'enfant est associé à des forces armées ou à des groupes armés",
-        ],
-    },
-
-    "DRC_2023": {
-        # from cases_coutry_helpers.py lines 470-535 ("## DRC-2")
-        # '## DRC-2' block: Assessment 2023 data with DRC_ocha_2025
-        # --- general
-        "country": 'Democratic Republic of the Congo -- DRC',
-        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
-        "selected_language": 'French',
-        "label": 'label',
-        "start_school": 'September',
-        "admin_var": 'Admin_3',
-        "vector_cycle": [11, 0],
-        # TODO: add later — not used by the run script yet
-        # "primary_start": 6,
-        # "secondary_end": 17,
-        "hybrid_country": False,  # not set in original: default
-        "mismatch_admin": False,
-        "no_ocha_data": False,
-
-        # --- input files
-        "excel_data_path": 'input/REACH_MSNA_2023_DRC_clean dataset_v2.xlsx',
-        "excel_path_ocha": 'input/DRC_ocha_2025.xlsx',
-        "sheets": {
-            "household": 'BDD nettoyée',
-            "edu": 'HH roster',
-            "survey": 'Questionnaire',
-            "choices": 'Options',
-            "ocha": 'ocha',
-            "scope_fix": 'scope-fix',
-        },
-        "output_dir": "output_validation",
-
-        # --- population-group mapping (page 2): values from your status column, None if the group is not present
-        # TODO: fill in before running (the script stops if all five are None)
-        "host_value": None,
-        "idp_value": None,
-        "returnee_value": None,
-        "refugee_value": None,
-        "other_value": None,
-
-        # --- Assessment variables
-        "status_var": 'pop_group',
-        "access_var": 'edu_access',
-        "teacher_disruption_var": 'edu_disruption_teacher',
-        "idp_disruption_var": 'edu_disruption_displaced',
-        "armed_disruption_var": 'no_indicator',
-        "natural_hazard_var": 'no_indicator',
-        "natural_hazard_var_sev": None,  # not set in original: default
-        "additional_last_var": 'no_indicator',  # not set in original: default
-        "additional_last_sev": None,  # not set in original: default
-        "additional_2_last_var": 'no_indicator',  # not set in original: default
-        "additional_2_last_sev": None,  # not set in original: default
-        "barrier_var": 'edu_barrier',
-        "age_var": 'age_years',
-        "gender_var": 'ind_gender',
-
-        # --- barrier severity
-        "selected_severity_4_barriers": [
-            "Risques de protection pendant le trajet vers l'école",
-            "Risques de protection à l'école",
-            'Enfant aidant à la maison / à la ferme',
-            "Impossibilité d'enregistrer ou d'inscrire l'enfant à l'école",
-            'Mariage et/ou grossesse',
-        ],
-        "selected_severity_5_barriers": [
-            'Les enfants rejoignent ou sont recrutés par des groupes armés',
-        ],
-    },
-
     "MLI_2024": {
         # from cases_coutry_helpers.py lines 599-659 ("## MLI")
         # --- general
@@ -1567,7 +1934,7 @@ CASES = {
         ],
     },
 
-    "BFA_2025": {
+    "BFA_2025-old": {
         # from the former run_PiNcalculation_outside_streamlit2.py (deleted), "## BFA (run2)"
         # --- general
         "country": 'Burkina Faso -- BFA',
