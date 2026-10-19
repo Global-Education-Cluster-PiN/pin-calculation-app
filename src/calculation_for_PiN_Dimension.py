@@ -640,6 +640,10 @@ def merge_dimension_ocha_with_strata (strata_dimension_per_admin_status, categor
 ##--------------------------------------------------------------------------------------------
 def ensure_columns(pin_list, needed_columns):
     for category, grouped_df in pin_list.items():
+        # Severity levels as floats (2.0 ... 5.0): they are integers when every child has a severity,
+        # and the columns are later renamed from their text '2.0' ... '5.0'
+        grouped_df.columns = [float(col) if isinstance(col, (int, np.integer)) and not isinstance(col, bool) else col
+                              for col in grouped_df.columns]
         # Check if columns are missing and add them
         missing_columns = [col for col in needed_columns if col not in grouped_df.columns]
         # Add missing columns only, without duplicating any existing ones
