@@ -73,7 +73,7 @@ def _strip_ner_prefix(series: pd.Series) -> pd.Series:
 ### map ########### map ########
 desired_admin_level = {
     'MMR': 'ADM1_PCODE',
-    'DRC': 'ADM3_PCODE',
+    'COD': 'ADM3_PCODE',
     'SSD': 'ADM2_PCODE'
 }
 DEFAULT_LEVEL = 'ADM2_PCODE'

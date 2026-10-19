@@ -2,13 +2,153 @@
 # Pick the case to run with ACTIVE_CASE; add new countries/years as new keyed entries.
 # To run several cases in a row, list them in RUN_CASES and run run_all_cases.py.
 
-ACTIVE_CASE = "DRC_2023"                        # single run
-RUN_CASES = ["DRC_2023", "DRC_2026","DRC_2025"] #,"DRC_2023"]    # batch run (run_all_cases.py)
+ACTIVE_CASE = "BFA_2024"                       # single run
+RUN_CASES = ["HTI_2026_Departement", "HTI_2026_ZMPAP"] #,"COD_2023","COD_2026","COD_2025"]    # batch run (run_all_cases.py)
 ARCHIVE_INPUTS = True    # True: copy the Assessment dataset and the OCHA file into each successful run's archive zip; False: store only their checksums
 
 CASES = {
 
-    "DRC_2026": {
+    "HTI_2026_Departement": {
+        # --- general
+        "country": 'Haiti -- HTI',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": 'French',
+        "label": 'label::french (fr)',
+        "start_school": 'September',
+        "admin_var": 'Admin_1: Departments (départements)',
+        "vector_cycle": [11, 14],  # fondamental 1st-2nd cycle 6-11, 3rd cycle 12-14, secondary 15-17
+        "hybrid_country": False,
+        "mismatch_admin": False,
+        "no_ocha_data": False,
+
+        # --- input files (country_support/HTI/09_code: 01_prepare_pop.R, 02_msna_prep.R)
+        # MSNA 2026, survey "Departement": representative at admin1 (department). Ouest includes the
+        # ZMPAP, as in the OCHA template (the ZMPAP is reported in addition, HTI_2026_ZMPAP)
+        "excel_data_path": 'input/HTI/HTI_MSNA_2026_Departement_edu_data_v1.xlsx',
+        "excel_path_ocha": 'input/HTI/HTI_Population_figures_Departement_v1.xlsx',
+        "sheets": {
+            "household": 'main',
+            "edu": 'edu_ind',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        "host_value": "host_community",
+        "idp_value": "idp",
+        "returnee_value": "returnee",
+        "refugee_value": None,
+        "other_value": None,
+
+        # --- Assessment variables (names of country_support/HTI/09_code/02_msna_prep.R)
+        "status_var": 'pop_group',
+        "access_var": 'edu_access',
+        "teacher_disruption_var": 'edu_disrupted_teacher',
+        "idp_disruption_var": 'edu_disrupted_displaced',
+        "armed_disruption_var": 'edu_disrupted_attack',
+        "natural_hazard_var": 'edu_disrupted_hazards',
+        "natural_hazard_var_sev": 3,
+        "additional_last_var": 'no_indicator',
+        "additional_last_sev": None,
+        "additional_2_last_var": 'no_indicator',
+        "additional_2_last_sev": None,
+        "barrier_var": 'edu_barrier',
+        "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name"; labels (as on the platform): "label" (default)
+        "age_var": 'ind_age',
+        "gender_var": 'ind_gender',
+
+        # --- barrier severity (choice names of l_edu_barrier in the MSNA 2026 tool)
+        "selected_severity_4_barriers": [
+            "school_closed",              # 1. L'école a été fermée en raison de dommages, d'une catastrophe naturelle ou d'un conflit
+            "protection_at_school",       # 4. Risques de protection à l'école
+            "protection_travel_school",   # 5. Risques de protection pendant le trajet vers l'école
+            "child_work_home",            # 6. L'enfant doit travailler à la maison ou dans la ferme du ménage
+            "child_work_outside",         # 7. L'enfant participe à des activités génératrices de revenus en dehors du foyer
+            "child_marriage",             # 9. Mariage ou fiançailles
+            "child_pregnancy",            # 9. Grossesse
+            "ban",                        # 12. Une interdiction empêche l'enfant d'aller à l'école
+            "enroll_lack_documentation",  # 14. Impossibilité de s'inscrire à l'école en raison d'un manque de documents
+            "enroll_displacement",        # 15. Impossibilité de s'inscrire à l'école en raison d'un déplacement/retour récent
+        ],
+        "selected_severity_5_barriers": [
+            "child_armed_group",          # 8. L'enfant est associé à des forces armées ou à des groupes armés
+        ],
+    },
+
+    "HTI_2026_ZMPAP": {
+        # --- general
+        "country": 'Haiti -- HTI',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": 'French',
+        "label": 'label::french (fr)',
+        "start_school": 'September',
+        "admin_var": 'Admin_2: Communes',  # admin2 of the MSNA is the commune (the app lists Admin_2 as arrondissements for HTI)
+        "vector_cycle": [11, 14],  # fondamental 1st-2nd cycle 6-11, 3rd cycle 12-14, secondary 15-17
+        "hybrid_country": False,
+        "mismatch_admin": False,
+        "no_ocha_data": False,
+
+        # --- input files (country_support/HTI/09_code: 01_prepare_pop.R, 02_msna_prep.R)
+        # MSNA 2026, survey "ZMPAP": representative at admin2 (the 7 communes of the zone metropolitaine
+        # de Port-au-Prince); reported in addition to the departments (HTI_2026_Departement), not summed
+        "excel_data_path": 'input/HTI/HTI_MSNA_2026_ZMPAP_edu_data_v1.xlsx',
+        "excel_path_ocha": 'input/HTI/HTI_Population_figures_ZMPAP_v1.xlsx',
+        "sheets": {
+            "household": 'main',
+            "edu": 'edu_ind',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        "host_value": "host_community",
+        "idp_value": "idp",
+        "returnee_value": "returnee",
+        "refugee_value": None,
+        "other_value": None,
+
+        # --- Assessment variables (names of country_support/HTI/09_code/02_msna_prep.R)
+        "status_var": 'pop_group',
+        "access_var": 'edu_access',
+        "teacher_disruption_var": 'edu_disrupted_teacher',
+        "idp_disruption_var": 'edu_disrupted_displaced',
+        "armed_disruption_var": 'edu_disrupted_attack',
+        "natural_hazard_var": 'edu_disrupted_hazards',
+        "natural_hazard_var_sev": 3,
+        "additional_last_var": 'no_indicator',
+        "additional_last_sev": None,
+        "additional_2_last_var": 'no_indicator',
+        "additional_2_last_sev": None,
+        "barrier_var": 'edu_barrier',
+        "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name"; labels (as on the platform): "label" (default)
+        "age_var": 'ind_age',
+        "gender_var": 'ind_gender',
+
+        # --- barrier severity (choice names of l_edu_barrier in the MSNA 2026 tool)
+        "selected_severity_4_barriers": [
+            "school_closed",              # 1. L'école a été fermée en raison de dommages, d'une catastrophe naturelle ou d'un conflit
+            "protection_at_school",       # 4. Risques de protection à l'école
+            "protection_travel_school",   # 5. Risques de protection pendant le trajet vers l'école
+            "child_work_home",            # 6. L'enfant doit travailler à la maison ou dans la ferme du ménage
+            "child_work_outside",         # 7. L'enfant participe à des activités génératrices de revenus en dehors du foyer
+            "child_marriage",             # 9. Mariage ou fiançailles
+            "child_pregnancy",            # 9. Grossesse
+            "ban",                        # 12. Une interdiction empêche l'enfant d'aller à l'école
+            "enroll_lack_documentation",  # 14. Impossibilité de s'inscrire à l'école en raison d'un manque de documents
+            "enroll_displacement",        # 15. Impossibilité de s'inscrire à l'école en raison d'un déplacement/retour récent
+        ],
+        "selected_severity_5_barriers": [
+            "child_armed_group",          # 8. L'enfant est associé à des forces armées ou à des groupes armés
+        ],
+    },
+
+    "COD_2026": {
         # from cases_coutry_helpers.py lines 406-469 ("## DRC")
         # --- general
         "country": 'Democratic Republic of the Congo -- DRC',
@@ -82,7 +222,7 @@ CASES = {
         ],
     },
 
-    "DRC_2025": {
+    "COD_2025": {
         # from cases_coutry_helpers.py lines 406-469 ("## DRC")
         # --- general
         "country": 'Democratic Republic of the Congo -- DRC',
@@ -158,7 +298,7 @@ CASES = {
         ],
     },
 
-    "DRC_2024": {
+    "COD_2024": {
         # from cases_coutry_helpers.py lines 406-469 ("## DRC")
         # --- general
         "country": 'Democratic Republic of the Congo -- DRC',
@@ -222,7 +362,7 @@ CASES = {
         ],
     },
 
-    "DRC_2023": {
+    "COD_2023": {
         # from cases_coutry_helpers.py lines 470-535 ("## DRC-2")
         # '## DRC-2' block: Assessment 2023 data with DRC_ocha_2025
         # --- general
@@ -296,24 +436,25 @@ CASES = {
         # --- general
         "country": 'Burkina Faso -- BFA',
         "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
-        "selected_language": 'French',  # not set in original: default — check
-        "label": 'label::French',
+        "selected_language": 'French',
+        "label": 'label',
         "start_school": 'September',
         "admin_var": 'Admin_3: Department (Département)',
         "vector_cycle": [10, 14],
         # TODO: add later — not used by the run script yet
         # "primary_start": 6,
         # "secondary_end": 17,
-        "hybrid_country": True,  # not set in original: default
+        "hybrid_country": False,  # not set in original: default
         "mismatch_admin": True,
         "no_ocha_data": False,  # not set in original: default
 
-        # --- input files
-        "excel_data_path": 'input/BFA/REACH I BFA I 2025 MSNA-eduPlatform.xlsx',
-        "excel_path_ocha": 'input/BFA/BFA_ocha_FINAL_20261015_Admin2.xlsx',
+        # --- input files (country_support/BFA/09_code: 01_prepare_pop.R, 02_msna_prep.R; scope-fix by hand)
+        # MSNA 2025: all its provinces (31)
+        "excel_data_path": 'input/BFA/BFA_MSNA_2025_edu_data_v1.xlsx',
+        "excel_path_ocha": 'input/BFA/BFA_Population_figures_PiN2026MSNA2025.xlsx',
         "sheets": {
             "household": 'main',
-            "edu": 'indvidual', #yes, there is a typo
+            "edu": 'edu_ind',
             "survey": 'survey',
             "choices": 'choices',
             "ocha": 'ocha',
@@ -322,41 +463,181 @@ CASES = {
         "output_dir": "output_validation",
 
         # --- population-group mapping (page 2): values from your status column, None if the group is not present
-        # TODO: fill in before running (the script stops if all five are None)
         "host_value": "non_pdi",
-        "idp_value": "pdi",
+        "idp_value": "pdi",  # IDPs + returnees (one group in the MSNA)
         "returnee_value": None,
         "refugee_value": None,
         "other_value": None,
 
-        # --- Assessment variables
+        # --- Assessment variables (standard names of country_support/BFA/09_code/02_msna_prep.R)
         "status_var": 'pop_group',
         "access_var": 'edu_access',
-        "teacher_disruption_var": 'edu_teachers',
-        "idp_disruption_var": 'edu_displaced',
+        "teacher_disruption_var": 'edu_disrupted_teacher',
+        "idp_disruption_var": 'edu_disrupted_displaced',
         "armed_disruption_var": 'no_indicator',
-        "natural_hazard_var": 'edu_hazards',  # not set in original: default
-        "natural_hazard_var_sev": 3,  # not set in original: default
+        "natural_hazard_var": 'edu_disrupted_hazards',
+        "natural_hazard_var_sev": 3,
         "additional_last_var": 'edu_incident_trajet',
         "additional_last_sev": 4,
         "additional_2_last_var": 'edu_incident_ecol',
-        "additional_2_last_sev": 4,  # not set in original: default
-        "barrier_var": 'edu_barriers',
+        "additional_2_last_sev": 4,
+        "barrier_var": 'edu_barrier',
         "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name"; labels (as on the platform): "label" (default)
-        "age_var": 'sne_enfant_ind_age',
-        "gender_var": 'sne_enfant_ind_gender',
+        "age_var": 'ind_age',
+        "gender_var": 'ind_gender',
 
-        # --- barrier severity
+        # --- barrier severity (choice names of l_raison_pas_educ_formel in the MSNA 2025 tool)
         "selected_severity_4_barriers": [
             "fermeture_ecole",
             "risque_protection",
             "risque_protection_trajet",
+            "travail_domestiq",
+            "participation_agr",
+            "mariage",
             "grossesse",
+        ],
+        "selected_severity_5_barriers": [
+            "interdiction",
+        ],
+    },
+
+    "BFA_2024": {
+        # from cases_coutry_helpers.py lines 148-209 ("## BFA")
+        # --- general
+        "country": 'Burkina Faso -- BFA',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": 'French',
+        "label": 'label',
+        "start_school": 'September',
+        "admin_var": 'Admin_3: Department (Département)',
+        "vector_cycle": [10, 14],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 6,
+        # "secondary_end": 17,
+        "hybrid_country": False,  # not set in original: default
+        "mismatch_admin": True,
+        "no_ocha_data": False,  # not set in original: default
+
+        # --- input files (country_support/BFA/09_code: 01_prepare_pop.R, 02_msna_prep.R; scope-fix by hand)
+        # MSNA 2024: only the provinces not covered by the MSNA 2025 (BF4702, BF5303)
+        "excel_data_path": 'input/BFA/BFA_MSNA_2024_edu_data_v1.xlsx',
+        "excel_path_ocha": 'input/BFA/BFA_Population_figures_PiN2026MSNA2024.xlsx',
+        "sheets": {
+            "household": 'main',
+            "edu": 'edu_ind',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        "host_value": "non_pdi",
+        "idp_value": "pdi",  # IDPs + returnees (one group in the MSNA)
+        "returnee_value": None,
+        "refugee_value": None,
+        "other_value": None,
+
+        # --- Assessment variables (standard names of country_support/BFA/09_code/02_msna_prep.R)
+        "status_var": 'pop_group',
+        "access_var": 'edu_access',
+        "teacher_disruption_var": 'edu_disrupted_teacher',
+        "idp_disruption_var": 'edu_disrupted_displaced',
+        "armed_disruption_var": 'no_indicator',
+        "natural_hazard_var": 'edu_disrupted_hazards',
+        "natural_hazard_var_sev": 3,
+        "additional_last_var": 'edu_incident_trajet',
+        "additional_last_sev": 4,
+        "additional_2_last_var": 'edu_incident_ecol',
+        "additional_2_last_sev": 4,
+        "barrier_var": 'edu_barrier',
+        "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name"; labels (as on the platform): "label" (default)
+        "age_var": 'ind_age',
+        "gender_var": 'ind_gender',
+
+        # --- barrier severity (choice names of l_raison_pas_educ_formel in the MSNA 2024 tool)
+        "selected_severity_4_barriers": [
+            "fermeture_ecole",
+            "risque_protection",
+            "risque_protection_trajet",
+            "travail_domestiq",
             "participation_agr",
             "mariage",
         ],
         "selected_severity_5_barriers": [
             "interdiction",
+            "enft_recrute",
+        ],
+    },
+
+    "BFA_2024_regions": {
+        # --- general
+        "country": 'Burkina Faso -- BFA',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": 'French',
+        "label": 'label',
+        "start_school": 'September',
+        "admin_var": 'Admin_3: Department (Département)',
+        "vector_cycle": [10, 14],
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 6,
+        # "secondary_end": 17,
+        "hybrid_country": False,
+        "mismatch_admin": True,
+        "no_ocha_data": False,
+
+        # --- input files (country_support/BFA/09_code: 01_prepare_pop.R, 02_msna_prep.R; scope-fix by hand)
+        # MSNA 2024: households only representative at admin1, regions BF13, BF50, BF51, BF55, BF57.
+        # Scope-fix: the 102 communes of their provinces not covered by the MSNA 2025 (not Poni, BF5704)
+        "excel_data_path": 'input/BFA/BFA_MSNA_2024_regions_edu_data_v1.xlsx',
+        "excel_path_ocha": 'input/BFA/BFA_Population_figures_PiN2026MSNA2024_regions.xlsx',
+        "sheets": {
+            "household": 'main',
+            "edu": 'edu_ind',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        "host_value": "non_pdi",
+        "idp_value": "pdi",  # IDPs + returnees (one group in the MSNA)
+        "returnee_value": None,
+        "refugee_value": None,
+        "other_value": None,
+
+        # --- Assessment variables (standard names of country_support/BFA/09_code/02_msna_prep.R)
+        "status_var": 'pop_group',
+        "access_var": 'edu_access',
+        "teacher_disruption_var": 'edu_disrupted_teacher',
+        "idp_disruption_var": 'edu_disrupted_displaced',
+        "armed_disruption_var": 'no_indicator',
+        "natural_hazard_var": 'edu_disrupted_hazards',
+        "natural_hazard_var_sev": 3,
+        "additional_last_var": 'edu_incident_trajet',
+        "additional_last_sev": 4,
+        "additional_2_last_var": 'edu_incident_ecol',
+        "additional_2_last_sev": 4,
+        "barrier_var": 'edu_barrier',
+        "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name"; labels (as on the platform): "label" (default)
+        "age_var": 'ind_age',
+        "gender_var": 'ind_gender',
+
+        # --- barrier severity (choice names of l_raison_pas_educ_formel in the MSNA 2024 tool)
+        "selected_severity_4_barriers": [
+            "fermeture_ecole",
+            "risque_protection",
+            "risque_protection_trajet",
+            "travail_domestiq",
+            "participation_agr",
+            "mariage",
+        ],
+        "selected_severity_5_barriers": [
+            "interdiction",
+            "enft_recrute",
         ],
     },
 
@@ -1272,70 +1553,6 @@ CASES = {
         ],
         "selected_severity_5_barriers": [
             'Child is associated with armed forces or armed groups ',
-        ],
-    },
-
-    "BFA_2024": {
-        # from cases_coutry_helpers.py lines 148-209 ("## BFA")
-        # --- general
-        "country": 'Burkina Faso -- BFA',
-        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
-        "selected_language": 'English',  # not set in original: default — check
-        "label": 'label',
-        "start_school": 'September',
-        "admin_var": 'Admin_3: Department (Département)',
-        "vector_cycle": [10, 14],
-        # TODO: add later — not used by the run script yet
-        # "primary_start": 6,
-        # "secondary_end": 17,
-        "hybrid_country": False,  # not set in original: default
-        "mismatch_admin": True,
-        "no_ocha_data": False,  # not set in original: default
-
-        # --- input files
-        "excel_data_path": 'input/BFA2402_MSNA_2024_DATA_CLEANED_VF.xlsx',
-        "excel_path_ocha": 'input/ocha_pop_BFA.xlsx',
-        "sheets": {
-            "household": 'main_cleaned',
-            "edu": 'loop_sne_cleaned',
-            "survey": 'survey',
-            "choices": 'choices',
-            "ocha": 'ocha',
-            "scope_fix": 'scope-fix',
-        },
-        "output_dir": "output_validation",
-
-        # --- population-group mapping (page 2): values from your status column, None if the group is not present
-        # TODO: fill in before running (the script stops if all five are None)
-        "host_value": None,
-        "idp_value": None,
-        "returnee_value": None,
-        "refugee_value": None,
-        "other_value": None,
-
-        # --- Assessment variables
-        "status_var": 'i_type_pop',
-        "access_var": 'e_enfant_scolarise_formel',
-        "teacher_disruption_var": 'e_absence_enseignant',
-        "idp_disruption_var": 'e_ecole_abris',
-        "armed_disruption_var": 'no_indicator',
-        "natural_hazard_var": 'no_indicator',  # not set in original: default
-        "natural_hazard_var_sev": None,  # not set in original: default
-        "additional_last_var": 'no_indicator',  # not set in original: default
-        "additional_last_sev": None,  # not set in original: default
-        "additional_2_last_var": 'no_indicator',  # not set in original: default
-        "additional_2_last_sev": None,  # not set in original: default
-        "barrier_var": 'e_raison_pas_educ_formel',
-        "age_var": 'sne_enfant_ind_age',
-        "gender_var": 'sne_enfant_ind_genre',
-
-        # --- barrier severity
-        "selected_severity_4_barriers": [
-            'Risques de protection à l’école (tels que le harcèlement physique et verbal, risque de viol, les attaques contre les écoles ou d’autres incidents de protection)',
-            'Risques de protection pendant le trajet vers l’école (tels que les incidents de harcèlement physique et verbal, risque de viol ou d’autres incidents de protection)',
-        ],
-        "selected_severity_5_barriers": [
-            "L'enfant est associé à des forces armées ou à des groupes armés",
         ],
     },
 
