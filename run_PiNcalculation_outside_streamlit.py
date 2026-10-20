@@ -220,7 +220,8 @@ if ocha_data is not None:
                                                                                     admin_var, vector_cycle, start_school, status_var,
                                                                                     host_value, idp_value, returnee_value, refugee_value, other_value,
                                                                                     mismatch_admin,
-                                                                                    selected_language= selected_language, hybrid_country=hybrid_country)
+                                                                                    selected_language= selected_language, hybrid_country=hybrid_country,
+                                                                                    barrier_match=cfg.get("barrier_match", "label"))
 
 
 

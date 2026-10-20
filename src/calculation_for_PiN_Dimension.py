@@ -1108,15 +1108,18 @@ def empty_prop_table(all_df, admin_var, pop_group_var, target_var, country=None)
     )
 
 ##--------------------------------------------------------------------------------------------   -----------------------------------
-def find_matching_choices(choices_df, barriers_list, label_var):
+def find_matching_choices(choices_df, barriers_list, label_var, match_column=None):
+    # match_column: column of the choices the barriers are matched on ("name" or the label column,
+    # by default label_var); the label of the matched choice is used in the column names
+    match_column = match_column or label_var
     # List to hold the results
     results = []
-    
+
     # Iterate over each barrier in the list
     for barrier in barriers_list:
-        # Filter choices where the label_var matches the current barrier
-        matched_choices = choices_df[choices_df[label_var] == barrier]
-        
+        # Filter choices where the match column matches the current barrier
+        matched_choices = choices_df[choices_df[match_column] == barrier]
+
         # If no matches are found, add a 'notfound' entry
         if matched_choices.empty:
             result_entry = {'name': 'notfound', 'label': barrier}
@@ -1124,15 +1127,17 @@ def find_matching_choices(choices_df, barriers_list, label_var):
         else:
             # For each matched choice, create an entry in the results list
             for _, choice in matched_choices.iterrows():
-                result_entry = {'name': choice['name'], 'label': barrier}
+                result_entry = {'name': choice['name'], 'label': choice[label_var]}
                 results.append(result_entry)
-    
+
     return results
 
 ##--------------------------------------------------------------------------------------------
-def process_indicator_dataframes(indicator_access_list, indicator_dataframes, choice_data, 
-                                 selected_severity_4_barriers, selected_severity_5_barriers, 
-                                 label_var, admin_var, pop_group_var):
+# barrier_match: column of the choices the severity 4/5 barriers are matched on, as in add_severity:
+# "label" (the label column, default) or "name"
+def process_indicator_dataframes(indicator_access_list, indicator_dataframes, choice_data,
+                                 selected_severity_4_barriers, selected_severity_5_barriers,
+                                 label_var, admin_var, pop_group_var, barrier_match="label"):
 
     pin_by_indicator_status = {}
 
@@ -1162,8 +1167,9 @@ def process_indicator_dataframes(indicator_access_list, indicator_dataframes, ch
         pin_by_indicator_status[category] = pop_group_ind_df 
 
     # Step 2: Identify Severity Names and Prepare Column Renaming
-    severity_4_matches = find_matching_choices(choice_data, selected_severity_4_barriers, label_var=label_var)
-    severity_5_matches = find_matching_choices(choice_data, selected_severity_5_barriers, label_var=label_var)
+    match_column = "name" if barrier_match == "name" else label_var
+    severity_4_matches = find_matching_choices(choice_data, selected_severity_4_barriers, label_var=label_var, match_column=match_column)
+    severity_5_matches = find_matching_choices(choice_data, selected_severity_5_barriers, label_var=label_var, match_column=match_column)
 
     names_severity_4 = [entry['name'] for entry in severity_4_matches]
     names_severity_5 = [entry['name'] for entry in severity_5_matches]
@@ -1239,7 +1245,7 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
                 label, 
                 admin_var, vector_cycle, start_school, status_var,host_value ,idp_value ,returnee_value ,refugee_value, other_value ,
                 mismatch_admin,
-                selected_language,hybrid_country):
+                selected_language,hybrid_country, barrier_match="label"):
 
     admin_target = admin_var
     pop_group_var = status_var
@@ -1515,7 +1521,8 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
         selected_severity_5_barriers=selected_severity_5_barriers,
         label_var=label,
         admin_var=admin_var,
-        pop_group_var=pop_group_var
+        pop_group_var=pop_group_var,
+        barrier_match=barrier_match
     )
 
 
