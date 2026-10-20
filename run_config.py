@@ -2,11 +2,79 @@
 # Pick the case to run with ACTIVE_CASE; add new countries/years as new keyed entries.
 # To run several cases in a row, list them in RUN_CASES and run run_all_cases.py.
 
-ACTIVE_CASE = "BFA_2024"                       # single run
+ACTIVE_CASE = "NER_2026"                       # single run
 RUN_CASES = ["HTI_2026_Departement", "HTI_2026_ZMPAP"] #,"COD_2023","COD_2026","COD_2025"]    # batch run (run_all_cases.py)
 ARCHIVE_INPUTS = True    # True: copy the Assessment dataset and the OCHA file into each successful run's archive zip; False: store only their checksums
 
 CASES = {
+    
+    "NER_2026": {
+        # --- general
+        "country": 'Niger -- NER',
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": 'French',
+        "label": 'label::french (fr)',
+        "start_school": 'October',
+        "admin_var": 'Admin_2: Départements',
+        "vector_cycle": [11, 15],  # end of level1, end of level2 for 3 level system
+        "hybrid_country": False,
+        "mismatch_admin": True,    # scope-fix: departments without MSNA take the results of their region
+        "no_ocha_data": False,
+
+        # --- input files (country_support/NER/09_code: 01_prepare_pop.R, 02_msna_prep.R)
+        # MSNA 2026, representative at admin2 (department); only the departments of the analysis
+        # scope ("Portée d'analyse" = oui) in the population file
+        "excel_data_path": 'input/NER/NER_MSNA_2026_edu_data_v1.xlsx',
+        "excel_path_ocha": 'input/NER/NER_Population_figures_v1.xlsx',
+        "sheets": {
+            "household": 'main',
+            "edu": 'edu_ind',
+            "survey": 'survey',
+            "choices": 'choices',
+            "ocha": 'ocha',
+            "scope_fix": 'scope-fix',
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if
+        "host_value": "host",
+        "idp_value": "idp",
+        "returnee_value": None,     # "retourne" in the MSNA (110 hh), no population figure yet
+        "refugee_value": "refugie",
+        "other_value": None,        # migrants: population in Other, no group in the MSNA
+
+        # --- Assessment variables (names of country_support/NER/09_code/02_msna_prep.R)
+        "status_var": 'pop_group',
+        "access_var": 'edu_access',
+        "teacher_disruption_var": 'edu_disrupted_teacher',
+        "idp_disruption_var": 'edu_disrupted_displaced',
+        "armed_disruption_var": 'edu_disrupted_attack',
+        "natural_hazard_var": 'edu_disrupted_hazards',
+        "natural_hazard_var_sev": 4,
+        "additional_last_var": 'no_indicator',
+        "additional_last_sev": None,
+        "additional_2_last_var": 'no_indicator',
+        "additional_2_last_sev": None,
+        "barrier_var": 'edu_barrier',
+        "barrier_match": "name",  # severity 4/5 barriers below are choice names: "name": "label" (default)
+        "age_var": 'ind_age',
+        "gender_var": 'ind_gender',
+
+        # --- barrier severity (choice names of l_edu_barrier in the MSNA 2026 tool)
+        "selected_severity_4_barriers": [
+            "school_closed",              # 8. L'école a été fermée en raison de dommagee ou d'un conflit
+            "protection_at_school",       # 11. Risques de protection à l'école
+            "protection_travel_school",   # 12. Risques de protection pendant le trajet
+            "child_work_home",            # 13. L'enfant doit travailler à la maison ou dans la ferme du ménage
+            "child_work_outside",         # 14. L'enfant participe à des activités générdu ménage
+            "child_marriage",             # 16. Mariage ou fiançailles
+        ],
+        "selected_severity_5_barriers": [
+            "child_armed_group",          # 15. L'enfant est associé à des forces armées
+            "child_pregnancy",            # 17. Grossesse
+            "ban",                        # 20. Une interdiction empêche l'enfant d'alle
+        ],
+    },
 
     "HTI_2026_Departement": {
         # --- general
