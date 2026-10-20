@@ -1256,7 +1256,7 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
     if mismatch_admin:
         ocha_mismatch_list = mismatch_ocha_data
         # Create a defaultdict to store grouped data
-        detailed_list = ocha_mismatch_list.iloc[:, 1].astype(str).tolist()  # Converting to string
+        detailed_list = ocha_mismatch_list.iloc[:, 1].dropna().astype(str).tolist()  # Drop NaN and convert to string
         prefix_list = ocha_mismatch_list.iloc[:, 2].dropna().astype(str).tolist()  # Drop NaN and convert to string
         admin_low_ok_list = ocha_mismatch_list.iloc[:, 0].dropna().astype(str).tolist()  # Drop NaN and convert to string
 
@@ -1381,7 +1381,7 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
     print(df)
 
     if mismatch_admin:
-        detailed_list = ocha_mismatch_list.iloc[:, 1].astype(str).tolist()  # Converting to string
+        detailed_list = ocha_mismatch_list.iloc[:, 1].dropna().astype(str).tolist()  # Drop NaN and convert to string
         admin_up_msna = ocha_mismatch_list.iloc[:, 2].dropna().astype(str).tolist()  # Drop NaN and convert to string
         admin_low_ok_list = ocha_mismatch_list.iloc[:, 0].dropna().astype(str).tolist()  # Drop NaN and convert to string
 
