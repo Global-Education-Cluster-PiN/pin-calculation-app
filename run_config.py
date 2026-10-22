@@ -1,6 +1,8 @@
 # Settings for run_PiNcalculation_outside_streamlit*.py
 # Pick the case to run with ACTIVE_CASE; add new countries/years as new keyed entries.
 # To run several cases in a row, list them in RUN_CASES and run run_all_cases.py.
+# Optional in a case: "overall_country": True/False calculates the rates for all the population groups
+# together (True) or per group (False); without it, OVERALL_COUNTRIES of src/calculation_for_PiN_Dimension.py decides.
 
 ACTIVE_CASE = "NER_2026"                       # single run
 RUN_CASES = ["HTI_2026_Departement", "HTI_2026_ZMPAP"] #,"COD_2023","COD_2026","COD_2025"]    # batch run (run_all_cases.py)

@@ -11,6 +11,10 @@ from collections import defaultdict
 import sys
 
 
+# Countries whose rates are calculated per admin for all the population groups together and applied to
+# each group (instead of per admin and population group); calculatePIN(overall_country=...) overrides it
+OVERALL_COUNTRIES = {'Haiti -- HTI', 'Sudan -- SDN', 'Democratic Republic of the Congo -- DRC', 'South Sudan -- SSD'}
+
 int_2 = '2.0'
 int_3 = '3.0'
 int_4 = '4.0'
@@ -240,13 +244,12 @@ def replicate_for_popgroups(df_flat, pop_group_var, pop_groups):
     }
 
 ##--------------------------------------------------------------------------------------------
-def reduce_index(df, level, pop_group_var, country, unique_pop_group):
+def reduce_index(df, level, pop_group_var, overall, unique_pop_group):
 
-    OVERALL_COUNTRIES = {'Haiti -- HTI', 'Sudan -- SDN', 'Democratic Republic of the Congo -- DRC', 'South Sudan -- SSD'}
     print('--------------------------------------------')
     print(df)
     # ---- Standard mode (unchanged, and keeps 2-level columns) ----
-    if country not in OVERALL_COUNTRIES:
+    if not overall:
         df.columns = df.columns.get_level_values(1)
         df=df.droplevel(0, axis=0) 
         df=df.droplevel(0, axis=0) 
@@ -766,7 +769,7 @@ def find_best_match(admin_target: str,
     
 ##--------------------------------------------------------------------------------------------
 def run_mismatch_admin_analysis(df, admin_var, admin_column_rapresentative, pop_group_var, analysis_variable, 
-                                admin_low_ok_list, prefix_list, grouped_dict, country, unique_pop_group):
+                                admin_low_ok_list, prefix_list, grouped_dict, overall, unique_pop_group):
     all_expanded_results_admin_up = {}  # Collect results from both levels by category
     admin_var_dummy = 'admin_var_dummy'
 
@@ -774,8 +777,8 @@ def run_mismatch_admin_analysis(df, admin_var, admin_column_rapresentative, pop_
     # Check if the `admin_var` column is empty
     if df[admin_var].notna().any():
         # 1. Run the analysis grouped by 'admin_var' (Analysis A)
-        results_analysis_admin_low = calculate_prop (df=df, admin_var=admin_var, pop_group_var=pop_group_var, target_var= analysis_variable, country = country)
-        results_analysis_admin_low = reduce_index(results_analysis_admin_low, 0, pop_group_var,country, unique_pop_group)
+        results_analysis_admin_low = calculate_prop (df=df, admin_var=admin_var, pop_group_var=pop_group_var, target_var= analysis_variable, overall = overall)
+        results_analysis_admin_low = reduce_index(results_analysis_admin_low, 0, pop_group_var,overall, unique_pop_group)
         #print('after having calculate calculate_prop and reduce_index in the run_mismatch_admin_analysis -----> results_analysis_admin_low')    
         #print(results_analysis_admin_low)
         # 3. Filter results_analysis_admin_low to only include rows where 'admin_var' is in 'admin_low_ok_list'
@@ -801,8 +804,8 @@ def run_mismatch_admin_analysis(df, admin_var, admin_column_rapresentative, pop_
             length, admin_col = list(admin_column_rapresentative.items())[0]
             
             # Run the analysis grouped by this single admin column
-            results_analysis_admin_up = calculate_prop (df=df, admin_var=admin_col, pop_group_var=pop_group_var, target_var= analysis_variable, country = country)
-            results_analysis_admin_up = reduce_index(results_analysis_admin_up, 0, pop_group_var,country, unique_pop_group)
+            results_analysis_admin_up = calculate_prop (df=df, admin_var=admin_col, pop_group_var=pop_group_var, target_var= analysis_variable, overall = overall)
+            results_analysis_admin_up = reduce_index(results_analysis_admin_up, 0, pop_group_var,overall, unique_pop_group)
             #print('after having calculate calculate_prop and reduce_index in the run_mismatch_admin_analysis -----> results_analysis_admin_up')    
             #print(results_analysis_admin_up)
             admin_var_dummy = 'admin_var_dummy'
@@ -838,8 +841,8 @@ def run_mismatch_admin_analysis(df, admin_var, admin_column_rapresentative, pop_
                 #print(f"Running analysis for length {length} with column {admin_col} (index {idx})")
 
                 # Perform analysis grouped by each admin column
-                results_analysis_admin_up[idx] = calculate_prop (df=df, admin_var=admin_col, pop_group_var=pop_group_var, target_var= analysis_variable, country = country)
-                results_analysis_admin_up[idx] = reduce_index(results_analysis_admin_up[idx], 0, pop_group_var,country, unique_pop_group)
+                results_analysis_admin_up[idx] = calculate_prop (df=df, admin_var=admin_col, pop_group_var=pop_group_var, target_var= analysis_variable, overall = overall)
+                results_analysis_admin_up[idx] = reduce_index(results_analysis_admin_up[idx], 0, pop_group_var,overall, unique_pop_group)
                 
                 admin_var_dummy = 'admin_var_dummy'
                 for category, pop_group_df in results_analysis_admin_up[idx].items():
@@ -1052,23 +1055,20 @@ def translate_labels(data, translation_dict):
         raise TypeError("Input must be a pandas DataFrame or a dictionary of DataFrames.")
 
 ##--------------------------------------------------------------------------------------------
-def calculate_prop(df, admin_var, pop_group_var, target_var, agg_var='weights', country=None):
+def calculate_prop(df, admin_var, pop_group_var, target_var, agg_var='weights', overall=False):
     """
     Weighted proportions of `target_var` by admin and population group.
 
     Default: group by population group (current behavior).
-    If `country` is in OVERALL_COUNTRIES, compute per-admin overall
+    If `overall` (see OVERALL_COUNTRIES), compute per-admin overall
     (ignoring population groups) and broadcast the same proportions
     to each (admin, pop_group) pair — while preserving:
       • row MultiIndex: (admin_var, pop_group_var)
       • column MultiIndex: ('total_weight', <target category>)
     """
 
-    #OVERALL_COUNTRIES = {'Haiti -- HTI', 'Sudan -- SDN'}#, 'Myanmar -- MMR'
-    OVERALL_COUNTRIES = {'Haiti -- HTI', 'Sudan -- SDN', 'Democratic Republic of the Congo -- DRC','South Sudan -- SSD'}
-
     # ---- Standard mode (unchanged, and keeps 2-level columns) ----
-    if country not in OVERALL_COUNTRIES:
+    if not overall:
         print('i am in the startdard mode')
         df_results = (
             df.groupby([admin_var, pop_group_var, target_var])
@@ -1081,7 +1081,7 @@ def calculate_prop(df, admin_var, pop_group_var, target_var, agg_var='weights', 
 
 
      # 1) per-admin proportions (ignore pop_group)
-    overall = (
+    df_overall = (
         df.groupby([admin_var, target_var])
           .agg(total_weight=(agg_var, 'sum'))
           .groupby(level=0)
@@ -1089,17 +1089,16 @@ def calculate_prop(df, admin_var, pop_group_var, target_var, agg_var='weights', 
           .unstack(fill_value=0)
     )
 
-    return overall
+    return df_overall
 
 ##--------------------------------------------------------------------------------------------
-def empty_prop_table(all_df, admin_var, pop_group_var, target_var, country=None):
+def empty_prop_table(all_df, admin_var, pop_group_var, target_var, overall=False):
     """
     Result of calculate_prop for a subset without children (e.g. no child of secondary-school age):
     no rows, the same index levels as calculate_prop, and the categories of `target_var` in all the
     data as columns, so that the next steps find the columns they expect.
     """
-    OVERALL_COUNTRIES = {'Haiti -- HTI', 'Sudan -- SDN', 'Democratic Republic of the Congo -- DRC', 'South Sudan -- SSD'}
-    keys = [admin_var] if country in OVERALL_COUNTRIES else [admin_var, pop_group_var]
+    keys = [admin_var] if overall else [admin_var, pop_group_var]
     categories = sorted(all_df[target_var].dropna().unique(), key=str)
     return pd.DataFrame(
         index=pd.MultiIndex.from_arrays([[]] * (2 * len(keys)), names=keys * 2),
@@ -1245,10 +1244,12 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
                 label, 
                 admin_var, vector_cycle, start_school, status_var,host_value ,idp_value ,returnee_value ,refugee_value, other_value ,
                 mismatch_admin,
-                selected_language,hybrid_country, barrier_match="label"):
+                selected_language,hybrid_country, barrier_match="label", overall_country=None):
 
     admin_target = admin_var
     pop_group_var = status_var
+    # Rates for all the population groups together: overall_country of the case, else OVERALL_COUNTRIES
+    overall = (country in OVERALL_COUNTRIES) if overall_country is None else overall_country
     ocha_pop_data = ocha_data
 
     ocha_pop_data = ocha_pop_data.rename(columns={'Admin': 'Admin_label'})
@@ -1405,7 +1406,7 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
                 admin_low_ok_list=admin_low_ok_list,
                 prefix_list=admin_up_msna,
                 grouped_dict=grouped_dict,
-                country = country,
+                overall = overall,
                 unique_pop_group = unique_pop_group
 
             )
@@ -1415,21 +1416,21 @@ def calculatePIN (country, edu_data, household_data, choice_data, survey_data, o
             source_df = config['df']
             target_var = config['target_var']
             if source_df.empty:   # no child in this subset (e.g. none of secondary-school age): empty table
-                results_dict[analysis_var] = empty_prop_table(df, admin_var, pop_group_var, target_var, country)
+                results_dict[analysis_var] = empty_prop_table(df, admin_var, pop_group_var, target_var, overall)
             else:
                 results_dict[analysis_var] = calculate_prop(
                     df=source_df,
                     admin_var=admin_var,
                     pop_group_var=pop_group_var,
                     target_var=target_var,
-                    country=country
+                    overall=overall
                 )
             print(results_dict[analysis_var])
         # Reduce the index for all results
         for key in results_dict:
 
             print( results_dict[key])
-            results_dict[key] = reduce_index(results_dict[key], 0, pop_group_var, country, unique_pop_group)
+            results_dict[key] = reduce_index(results_dict[key], 0, pop_group_var, overall, unique_pop_group)
 
 
     # Extract results into individual variables if needed
