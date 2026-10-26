@@ -78,6 +78,9 @@ desired_admin_level = {
 }
 DEFAULT_LEVEL = 'ADM2_PCODE'
 shp_folder = "input_map"
+# Shapefile column with the PiN codes, for a shapefile whose own codes differ from them (e.g. SSD: HPC 2027
+# codes added to the COD-AB shapefile); other countries: the ADM*PCODE column closest in length to the PiN codes
+MAP_JOIN_COLUMN = {'SSD': 'PIN_PCODE'}
 
 
 # Define the colors
@@ -173,8 +176,11 @@ def make_map_severity(
     #-->adm_cols = [c for c in gdf.columns if c.upper().startswith("ADM")]
     adm_cols = [c for c in gdf.columns if c.upper().startswith("ADM") and "PCODE" in c.upper()]
     pin_len = pin_data[pin_col].astype(str).str.len().median()
-    best_adm = min(adm_cols,
-                   key=lambda c: abs(gdf[c].astype(str).str.len().median() - pin_len))
+    if MAP_JOIN_COLUMN.get(country_code) in gdf.columns:
+        best_adm = MAP_JOIN_COLUMN[country_code]
+    else:
+        best_adm = min(adm_cols,
+                       key=lambda c: abs(gdf[c].astype(str).str.len().median() - pin_len))
 
 
     print("---- DEBUG SSD ----")
