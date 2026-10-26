@@ -3,6 +3,9 @@
 # To run several cases in a row, list them in RUN_CASES and run run_all_cases.py.
 # Optional in a case: "overall_country": True/False calculates the rates for all the population groups
 # together (True) or per group (False); without it, OVERALL_COUNTRIES of src/calculation_for_PiN_Dimension.py decides.
+# Optional in a case: "ece_3_4_ratio" (3-4 population / 5-17 population) and "students_per_teacher" add the
+# children aged 3-4 (5-17 figures x ratio) and the teachers ((5-17 + 3-4) / students per teacher) to the
+# results Excel: rows in "PiN TOTAL" and "PiN 3-4 -- ..." / "PiN teachers -- ..." sheets (src/add_ece_teachers.py).
 
 ACTIVE_CASE = "CMR_2026"                       # single run
 RUN_CASES = ["HTI_2026_Departement", "HTI_2026_ZMPAP"] #,"COD_2023","COD_2026","COD_2025"]    # batch run (run_all_cases.py)
@@ -22,6 +25,9 @@ CASES = {
         "hybrid_country": False,           # True = hybrid country: French labels are not translated in calculatePIN
         "mismatch_admin": True,    # scope-fix: Ndian takes the results of South-West; Far North without MSNA yet (no PiN)
         "no_ocha_data": False,
+        # Children 3-4: the baseline's "1. Children" are 0-17 (18 years): 3-4 = 2 years, 5-17 = 13 years
+        "ece_3_4_ratio": 2 / 13,
+        "students_per_teacher": 45,
 
         # --- input files (country_support/CMR/09_code: 01_prepare_pop.R, 02_msna_NWSW_prep.R)
         # MSNA 2026 NWSW, representative at admin2 (department); the population file has the 19
@@ -95,13 +101,14 @@ CASES = {
         "hybrid_country": False,           # True = hybrid country: French labels are not translated in calculatePIN
         "mismatch_admin": True,    # scope-fix: Ayod and Budi take the results of their state
         "no_ocha_data": False,
-        # Children 3-4 (for the 3-4 y.o. and teacher rows, not implemented yet): 3-4 = 5-17 x 7.4 / 35.
+        # Children 3-4 (to add the 3-4 y.o. and teacher rows, uncomment both keys): 3-4 = 5-17 x 7.4 / 35.
         # Origin: ICCG endorsed 2027 baseline (country_support/SSD/10_PiN supporting files), sheet
         # "2027 Population Baseline", shares of the affected population, the same in all counties:
         # under 5 = 9.6% male + 8.9% female = 18.5%, so 3-4 (2 of the 5 years) = 18.5% x 2/5 = 7.4%;
         # 5-17 = 17.7% male + 17.3% female = 35%. Both are shares of the same population, so the
         # 3-4 / 5-17 ratio is 7.4 / 35 (about 0.211). Check the shares of the new baseline every year
         # "ece_3_4_ratio": 7.4 / 35,
+        # "students_per_teacher": 45,
 
         # --- input files (country_support/SSD/09_code: 00_pcode_dictionary.R, 01_prepare_pop.R, 02_isna_prep.R)
         "excel_data_path": "input/SSD/SSD_ISNA_2026_edu_data_v1.xlsx",

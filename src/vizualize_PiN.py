@@ -129,7 +129,8 @@ color_mapping_dimension = {
 }
 
 alignment_columns = list(color_mapping.keys())
-def apply_final_formatting(country_name, workbook, overview_df, small_overview_df, admin_var, selected_language= 'English'):
+def apply_final_formatting(country_name, workbook, overview_df, small_overview_df, admin_var, selected_language= 'English', sheet_titles=None, extra_total_labels=()):
+    # sheet_titles: {sheet name: (title, note)} for sheets whose title is not "<sheet name> (5-17 y.o.)"; the note goes in row 3
 
     print("inside apply_final_formatting")
     label_perc2 = '% severity levels 1-2'
@@ -240,7 +241,7 @@ def apply_final_formatting(country_name, workbook, overview_df, small_overview_d
             for row in ws.iter_rows(min_row=6, max_row=ws.max_row):
                 strata_value = row[2].value  # Adjusting for zero-indexing; column C is the 'Strata' column
                 
-                if strata_value == tot_5_17_label:
+                if strata_value == tot_5_17_label or strata_value in extra_total_labels:
                     fill_color = colors["bluepin"]
                     for cell in row:
                         cell.fill = PatternFill(start_color=fill_color, end_color=fill_color, fill_type="solid")
@@ -308,12 +309,17 @@ def apply_final_formatting(country_name, workbook, overview_df, small_overview_d
             # Add the sheet name as a title in the first row
             title = ws.title
             title += age_label
+            note = None
+            if sheet_titles and ws.title in sheet_titles:
+                title, note = sheet_titles[ws.title]
             max_col = ws.max_column
             ws.merge_cells(start_row=1, start_column=5, end_row=1, end_column=max_col)
             title_cell = ws.cell(row=1, column=5)
             title_cell.value = title
             title_cell.font = Font(bold=True, size=14)
             title_cell.alignment = Alignment(horizontal='center', vertical='center')
+            if note:
+                ws.cell(row=3, column=5, value=note).font = Font(italic=True)
 
                 # Set column widths based on content
             for column in ws.columns:
@@ -470,7 +476,9 @@ def pop_groups_from_parameters(parameters_df):
     return mapping if any(mapping.values()) else None
 
 
-def create_output(country_label, dataframes, overview_df, small_overview_df, overview_sheet_name, admin_var, ocha=True, tot_severity=None, selected_language='English', parameters=None, ocha_data=None, parameters_df=None, notes=None):
+def create_output(country_label, dataframes, overview_df, small_overview_df, overview_sheet_name, admin_var, ocha=True, tot_severity=None, selected_language='English', parameters=None, ocha_data=None, parameters_df=None, notes=None, extra_sheets=None, extra_total_labels=()):
+    # extra_sheets: {sheet name: (table by admin, title, note)} written after the group sheets, e.g. the 3-4
+    # children and the teachers (src/add_ece_teachers.py); extra_total_labels: strata formatted as TOTAL rows
     country_name = country_label.split('__')[0]  # Extract the part before the "__"
     print("inside create_output")
     label_overall_severity = 'Overall PiN and severity'
@@ -493,6 +501,9 @@ def create_output(country_label, dataframes, overview_df, small_overview_df, ove
             df = add_admin_label(df, ocha_data)
             df.to_excel(writer, sheet_name=sheet_name, index=False)
 
+        for sheet_name, (df, _, _) in (extra_sheets or {}).items():
+            add_admin_label(df, ocha_data).to_excel(writer, sheet_name=sheet_name, index=False)
+
         # parameters_df: a ready-made table, e.g. the step 1 parameters carried into hybrid step 2
         if parameters:
             parameters_df, _ = parameters_to_df(parameters, selected_language)
@@ -509,7 +520,9 @@ def create_output(country_label, dataframes, overview_df, small_overview_df, ove
     workbook = load_workbook(output)
 
     # Apply the final formatting to the workbook
-    workbook = apply_final_formatting(country_name,workbook, overview_df, small_overview_df, admin_var, selected_language=selected_language)
+    workbook = apply_final_formatting(country_name,workbook, overview_df, small_overview_df, admin_var, selected_language=selected_language,
+                                      sheet_titles={name: (title, note) for name, (_, title, note) in (extra_sheets or {}).items()},
+                                      extra_total_labels=extra_total_labels)
     print("after apply_final_formatting")
 
     formatted_output = BytesIO()

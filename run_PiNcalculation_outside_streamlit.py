@@ -16,6 +16,7 @@ from src.vizualize_PiN import parameters_to_df
 from src.vizualize_PiN import create_indicator_output
 from src.vizualize_PiN import create_indicator_output_no_ocha
 from src.vizualize_PiN import create_pin_raw_output
+from src.add_ece_teachers import extend_overviews, admin_sheets
 from src.snapshot_PiN import create_snapshot_PiN
 from src.snapshot_PiN_FR import create_snapshot_PiN_FR
 from src.save_parameter import generate_word_document
@@ -232,34 +233,51 @@ if ocha_data is not None:
     # Create the Excel files
     label_total_pin_sheet = "PiN TOTAL"
 
+    # Children 3-4 and teachers (cases with "ece_3_4_ratio"): only in the results Excel (src/add_ece_teachers.py)
+    excel_overview_df, excel_overview_df_OCHA = final_overview_df, final_overview_df_OCHA
+    ece_sheets, ece_total_labels = None, ()
+    if cfg.get("ece_3_4_ratio") is not None:
+        if not cfg.get("students_per_teacher"):
+            raise ValueError(f"{ACTIVE_CASE}: ece_3_4_ratio needs students_per_teacher in run_config.py")
+        excel_overview_df, excel_overview_df_OCHA, ece_total_labels = extend_overviews(
+            final_overview_df, final_overview_df_OCHA, cfg["ece_3_4_ratio"], cfg["students_per_teacher"])
+        ece_sheets = admin_sheets(Tot_PiN_by_admin, Tot_PiN_JIAF, cfg["ece_3_4_ratio"], cfg["students_per_teacher"],
+                                  final_overview_df)
+        general_info = parameters.get("general_info", parameters.get("informations_generales"))
+        general_info["ece_3_4_ratio (3-4 / 5-17 population)"] = round(cfg["ece_3_4_ratio"], 4)
+        general_info["students_per_teacher"] = cfg["students_per_teacher"]
 
     if selected_language == "French":
         ocha_excel = create_output(
             country_label,
             Tot_PiN_JIAF,
-            final_overview_df,
-            final_overview_df_OCHA,
+            excel_overview_df,
+            excel_overview_df_OCHA,
             label_total_pin_sheet,
             admin_var,
             ocha=True,
             tot_severity=Tot_PiN_by_admin,
             selected_language=selected_language,
             parameters=parameters,
-            ocha_data=ocha_data
+            ocha_data=ocha_data,
+            extra_sheets=ece_sheets,
+            extra_total_labels=ece_total_labels
         )
     else:
         ocha_excel = create_output(
             country_label,
             Tot_PiN_JIAF,
-            final_overview_df,
-            final_overview_df_OCHA,
+            excel_overview_df,
+            excel_overview_df_OCHA,
             label_total_pin_sheet,
             admin_var,
             ocha=True,
             tot_severity=Tot_PiN_by_admin,
             selected_language=selected_language,
             parameters=parameters,
-            ocha_data=ocha_data
+            ocha_data=ocha_data,
+            extra_sheets=ece_sheets,
+            extra_total_labels=ece_total_labels
         )
 
     print("after create_output")
