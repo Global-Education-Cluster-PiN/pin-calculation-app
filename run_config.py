@@ -4,12 +4,161 @@
 # Optional in a case: "overall_country": True/False calculates the rates for all the population groups
 # together (True) or per group (False); without it, OVERALL_COUNTRIES of src/calculation_for_PiN_Dimension.py decides.
 
-ACTIVE_CASE = "NER_2026"                       # single run
+ACTIVE_CASE = "CMR_2026"                       # single run
 RUN_CASES = ["HTI_2026_Departement", "HTI_2026_ZMPAP"] #,"COD_2023","COD_2026","COD_2025"]    # batch run (run_all_cases.py)
 ARCHIVE_INPUTS = True    # True: copy the Assessment dataset and the OCHA file into each successful run's archive zip; False: store only their checksums
 
 CASES = {
-    
+
+    "CMR_2026": {
+        # --- general
+        "country": "Cameroon -- CMR",
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": "English",
+        "label": "label::english (en)",
+        "start_school": "September",  # data collection 24 June - 28 August 2026
+        "admin_var": "Admin_2: Departments",
+        "vector_cycle": [11, 16],  # anglophone system: primary 6-11, secondary 12-16, high school 17-18
+        "hybrid_country": False,           # True = hybrid country: French labels are not translated in calculatePIN
+        "mismatch_admin": True,    # scope-fix: Ndian takes the results of South-West; Far North without MSNA yet (no PiN)
+        "no_ocha_data": False,
+
+        # --- input files (country_support/CMR/09_code: 01_prepare_pop.R, 02_msna_NWSW_prep.R)
+        # MSNA 2026 NWSW, representative at admin2 (department); the population file has the 19
+        # departments of the baseline (Far North, North-West, South-West)
+        "excel_data_path": "input/CMR/CMR_NWSW_MSNA_2026_edu_data_v1.xlsx",
+        "excel_path_ocha": "input/CMR/CMR_Population_figures_v1.xlsx",
+
+        "sheets": {
+            "household": "main",
+            "edu": "edu_ind",
+            "survey": "survey",
+            "choices": "choices",
+            "ocha": "ocha",
+            "scope_fix": "scope-fix",
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        "host_value": "host",
+        "idp_value": "idp",
+        "returnee_value": "retourne",
+        "refugee_value": None,     # no refugee group in the baseline (refugees left empty in the population file)
+        "other_value": None,
+
+        # --- Assessment variables (names of country_support/CMR/09_code/02_msna_NWSW_prep.R)
+        "status_var": "pop_group",
+        "access_var": "edu_access",
+        "teacher_disruption_var": "edu_disrupted_teacher",
+        "idp_disruption_var": "edu_disrupted_displaced",
+        "armed_disruption_var": "edu_disrupted_attack",
+        "natural_hazard_var": "edu_disrupted_hazards",
+        "natural_hazard_var_sev": 4,  
+        "additional_last_var": "no_indicator",
+        "additional_last_sev": None,
+        "additional_2_last_var": "no_indicator",
+        "additional_2_last_sev": None,
+        "barrier_var": "edu_barrier",
+        "age_var": "ind_age",
+        "gender_var": "ind_gender",
+
+        # --- barrier severity (choice names of l_edu_barrier, recoded by label in 02_msna_NWSW_prep.R)
+        "barrier_match": "name",
+        "selected_severity_4_barriers": [
+            "school_closed",              # School has been closed due to damage, natural disaster, conflict
+            "protection_at_school",       # Protection risks whilst at the school
+            "protection_travel_school",   # Protection risks whilst travelling to the school
+            "child_work_home",            # Child needs to work at home or on the household's own farm
+            "child_work_outside",         # Child participating in income generating activities outside of the home
+            "child_marriage",             # Marriage or engagement
+        ],
+        "selected_severity_5_barriers": [
+            "child_armed_group",          # Child is associated with armed forces or armed groups
+            "child_pregnancy",            # Pregnancy
+            "ban",                        # There is a ban preventing child from attending
+        ],
+    },
+
+    "SSD_2026": {
+        # --- general
+        "country": "South Sudan -- SSD",
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": "English",
+        "label": "label::English",
+        "start_school": "February",  # school year February-December (ISNA: "2026 school year")
+        "admin_var": "Admin_2: Counties",
+        "vector_cycle": [13, 0],  # primary P1-P8 6-13, secondary S1-S4 14-17 (two levels)
+        # TODO: add later — not used by the run script yet
+        # "primary_start": 7,
+        # "secondary_end": 17,
+        # "step_2_hpc": False,
+        "hybrid_country": False,           # True = hybrid country: French labels are not translated in calculatePIN
+        "mismatch_admin": True,    # scope-fix: Ayod and Budi take the results of their state
+        "no_ocha_data": False,
+        # Children 3-4 (for the 3-4 y.o. and teacher rows, not implemented yet): 3-4 = 5-17 x 7.4 / 35.
+        # Origin: ICCG endorsed 2027 baseline (country_support/SSD/10_PiN supporting files), sheet
+        # "2027 Population Baseline", shares of the affected population, the same in all counties:
+        # under 5 = 9.6% male + 8.9% female = 18.5%, so 3-4 (2 of the 5 years) = 18.5% x 2/5 = 7.4%;
+        # 5-17 = 17.7% male + 17.3% female = 35%. Both are shares of the same population, so the
+        # 3-4 / 5-17 ratio is 7.4 / 35 (about 0.211). Check the shares of the new baseline every year
+        # "ece_3_4_ratio": 7.4 / 35,
+
+        # --- input files (country_support/SSD/09_code: 00_pcode_dictionary.R, 01_prepare_pop.R, 02_isna_prep.R)
+        "excel_data_path": "input/SSD/SSD_ISNA_2026_edu_data_v1.xlsx",
+        "excel_path_ocha": "input/SSD/SSD_Population_figures_v1.xlsx",
+
+        "sheets": {
+            "household": "main",
+            "edu": "edu_ind",
+            "survey": "survey",
+            "choices": "choices",
+            "ocha": "ocha",
+            "scope_fix": "scope-fix",
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        "host_value": "hc",
+        "idp_value": "idp",
+        "returnee_value": "ret",
+        "refugee_value": None,     # no refugee group in the ISNA (refugees left empty in the population file)
+        "other_value": None,
+
+        # --- Assessment variables
+        "status_var": "pop_group",
+        "access_var": "edu_access",
+        "teacher_disruption_var": "edu_disrupted_teacher",
+        "idp_disruption_var": "edu_disrupted_displaced",
+        "armed_disruption_var": "edu_disrupted_attack",
+        "natural_hazard_var": "edu_disrupted_hazards",
+        "natural_hazard_var_sev": 3,
+        "additional_last_var": "insecurity_armed_conflict_violence_threats",  # G.3.3 insecurity, armed conflict, violence, threats
+        "additional_last_sev": 4,
+        "additional_2_last_var": "school_temporarily_permanently_closed",  # G.3.7 school temporarily or permanently closed
+        "additional_2_last_sev": 3,
+        "barrier_var": "edu_barrier",
+        "age_var": "ind_age",
+        "gender_var": "ind_gender",
+
+        # --- barrier severity: labels of the choices sheet; the only lists of severities: 02_isna_prep.R
+        # (country_support/SSD) reads them to keep one barrier per child
+        "barrier_match": "label",
+        "selected_severity_4_barriers": [
+            "8. Insecurity, conflict or violence",
+            "11. Child is working or engaged in household/livelihood activities",
+            "17. Protection or safety concerns on the way to or at school",
+            "18. School occupied or used for other purposes",
+            "21. Marriage, engagement",
+            "23. Discrimination, stigma or social exclusion",
+            "24. Lack of required documentation or difficulty enrolling",
+            "25. Child recently arrived through displacement/return and could not enroll",
+            "26. School admission/enrolment restrictions",
+        ],
+        "selected_severity_5_barriers": [
+            "20. Pregnancy",
+        ],
+    },
+
     "NER_2026": {
         # --- general
         "country": 'Niger -- NER',
