@@ -14,6 +14,77 @@ ARCHIVE_INPUTS = True    # True: copy the Assessment dataset and the OCHA file i
 
 CASES = {
 
+    "MLI_2026": {
+        # --- general
+        "country": "Mali -- MLI",
+        "full_GEC_compliant": False,  # True: GEC compliant (all out-of-school girls above 12 in severity 5); False: not GEC compliant (standard rules)
+        "selected_language": "French",
+        "label": "label::french (fr)",
+        "start_school": "October",  # school year 2025-2026 (maybe November, to check); data collection 23 June - 12 September 2026
+        "admin_var": "Admin_2: Cercles",
+        "vector_cycle": [11, 15],
+        "hybrid_country": True,            # True = hybrid country: French labels are not translated in calculatePIN
+        "mismatch_admin": True,    # scope-fix: 27 cercles in scope without MSNA take the results of their region
+        "no_ocha_data": False,
+        "overall_country": False,  # rates per population group (the MSNA strata); a group without a stratum in a cercle gets no PiN
+        "students_per_teacher": None,  # teachers only (no 3-4 y.o.); empty = 45
+
+        # --- input files (country_support/MLI/09_code: 01_prepare_pop.R, 02_msna_prep.R)
+        # MSNA 2026, representative at admin2 (cercle) per stratum host / idp / refugie; the population
+        # file has the 92 cercles in the scope of the analysis, without refugees (MLI_2026_refugees: with them)
+        "excel_data_path": "input/MLI/MLI_MSNA_2026_edu_data_v1.xlsx",
+        "excel_path_ocha": "input/MLI/MLI_Population_figures_v1.xlsx",
+
+        "sheets": {
+            "household": "main",
+            "edu": "edu_ind",
+            "survey": "survey",
+            "choices": "choices",
+            "ocha": "ocha",
+            "scope_fix": "scope-fix",
+        },
+        "output_dir": "output_validation",
+
+        # --- population-group mapping (page 2): values from your status column, None if the group is not present
+        "host_value": "host",
+        "idp_value": "idp",
+        "returnee_value": "retourne",  # no returnee stratum: copy of the host households (host rates), 02_msna_prep.R
+        "refugee_value": None,         # refugees left out (MLI_2026_refugees: refugie)
+        "other_value": None,
+
+        # --- Assessment variables (names of country_support/MLI/09_code/02_msna_prep.R)
+        "status_var": "pop_group",
+        "access_var": "edu_access",
+        "teacher_disruption_var": "edu_disrupted_teacher",
+        "idp_disruption_var": "edu_disrupted_displaced",
+        "armed_disruption_var": "edu_disrupted_attack",
+        "natural_hazard_var": "edu_disrupted_hazards",
+        "natural_hazard_var_sev": 3,
+        "additional_last_var": "no_indicator",
+        "additional_last_sev": None,
+        "additional_2_last_var": "no_indicator",
+        "additional_2_last_sev": None,
+        "barrier_var": "edu_barrier",
+        "age_var": "ind_age",
+        "gender_var": "ind_gender",
+
+        # --- barrier severity (choice names of l_edu_barrier; the labels of the tool differ slightly from the list of the country)
+        "barrier_match": "name",
+        "selected_severity_4_barriers": [
+            "school_closed",              # L'école a été fermée en raison de dommages, d'une catastrophe naturelle ou d'un conflit.
+            "protection_at_school",       # Risques de protection à l'école
+            "protection_travel_school",   # Risques de protection pendant le trajet vers l'école
+            "child_work_home",            # L'enfant doit travailler à la maison ou dans la ferme du ménage (...)
+            "child_work_outside",         # L'enfant participe à des activités génératrices de revenus en dehors du foyer
+            "child_marriage",             # Mariage, fiançaille
+        ],
+        "selected_severity_5_barriers": [
+            "child_armed_group",          # L'enfant est associé à des forces armées ou à des groupes armés
+            "child_pregnancy",            # Grossesse
+            "ban",                        # Une interdiction empêche l'enfant d'aller à l'école
+        ],
+    },
+
     "CMR_2026": {
         # --- general
         "country": "Cameroon -- CMR",
@@ -112,7 +183,7 @@ CASES = {
         # "students_per_teacher": 45,
 
         # --- input files (country_support/SSD/09_code: 00_pcode_dictionary.R, 01_prepare_pop.R, 02_isna_prep.R)
-        "excel_data_path": "input/SSD/SSD_ISNA_2026_edu_data_v1.xlsx",
+        "excel_data_path": "input/SSD/SSD_ISNA_2026_edu_data_v2.xlsx",
         "excel_path_ocha": "input/SSD/SSD_Population_figures_v1.xlsx",
 
         "sheets": {
@@ -2493,4 +2564,11 @@ CASES["LMR_2022_EMIS"] = {
     "excel_path_other": 'input/emis_LMR_eemm.xlsx',
     "no_ocha_data": False,     # EMIS needs the OCHA figures (LMR_2022 runs without them)
     "sheets": {**CASES["LMR_2022"]["sheets"], "ocha": 'ocha', "other": 'indicator'},
+}
+
+# MLI_2026 with the refugees (population file with the refugees, columns AO/AP of the source)
+CASES["MLI_2026_refugees"] = {
+    **CASES["MLI_2026"],
+    "excel_path_ocha": "input/MLI/MLI_Population_figures_with_refugees_v1.xlsx",
+    "refugee_value": "refugie",
 }
