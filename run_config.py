@@ -6,6 +6,7 @@
 # Optional in a case: "ece_3_4_ratio" (3-4 population / 5-17 population) and "students_per_teacher" add the
 # children aged 3-4 (5-17 figures x ratio) and the teachers ((5-17 + 3-4) / students per teacher) to the
 # results Excel: rows in "PiN TOTAL" and "PiN 3-4 -- ..." / "PiN teachers -- ..." sheets (src/add_ece_teachers.py).
+# "students_per_teacher" alone adds the teachers only (5-17 / students per teacher); left empty (None) it is 45.
 
 ACTIVE_CASE = "CMR_2026"                       # single run
 RUN_CASES = ["HTI_2026_Departement", "HTI_2026_ZMPAP"] #,"COD_2023","COD_2026","COD_2025"]    # batch run (run_all_cases.py)

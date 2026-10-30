@@ -16,7 +16,7 @@ from src.vizualize_PiN import parameters_to_df
 from src.vizualize_PiN import create_indicator_output
 from src.vizualize_PiN import create_indicator_output_no_ocha
 from src.vizualize_PiN import create_pin_raw_output
-from src.add_ece_teachers import extend_overviews, admin_sheets
+from src.add_ece_teachers import extend_overviews, admin_sheets, DEFAULT_STUDENTS_PER_TEACHER
 from src.snapshot_PiN import create_snapshot_PiN
 from src.snapshot_PiN_FR import create_snapshot_PiN_FR
 from src.save_parameter import generate_word_document
@@ -233,19 +233,20 @@ if ocha_data is not None:
     # Create the Excel files
     label_total_pin_sheet = "PiN TOTAL"
 
-    # Children 3-4 and teachers (cases with "ece_3_4_ratio"): only in the results Excel (src/add_ece_teachers.py)
+    # Children 3-4 and teachers (cases with "ece_3_4_ratio" and/or "students_per_teacher"; teachers only
+    # without ece_3_4_ratio; students_per_teacher empty: 45): only in the results Excel (src/add_ece_teachers.py)
     excel_overview_df, excel_overview_df_OCHA = final_overview_df, final_overview_df_OCHA
     ece_sheets, ece_total_labels = None, ()
-    if cfg.get("ece_3_4_ratio") is not None:
-        if not cfg.get("students_per_teacher"):
-            raise ValueError(f"{ACTIVE_CASE}: ece_3_4_ratio needs students_per_teacher in run_config.py")
+    if cfg.get("ece_3_4_ratio") is not None or "students_per_teacher" in cfg:
+        ece_ratio = cfg.get("ece_3_4_ratio")
+        students_per_teacher = cfg.get("students_per_teacher") or DEFAULT_STUDENTS_PER_TEACHER
         excel_overview_df, excel_overview_df_OCHA, ece_total_labels = extend_overviews(
-            final_overview_df, final_overview_df_OCHA, cfg["ece_3_4_ratio"], cfg["students_per_teacher"])
-        ece_sheets = admin_sheets(Tot_PiN_by_admin, Tot_PiN_JIAF, cfg["ece_3_4_ratio"], cfg["students_per_teacher"],
-                                  final_overview_df)
+            final_overview_df, final_overview_df_OCHA, ece_ratio, students_per_teacher)
+        ece_sheets = admin_sheets(Tot_PiN_by_admin, Tot_PiN_JIAF, ece_ratio, students_per_teacher, final_overview_df)
         general_info = parameters.get("general_info", parameters.get("informations_generales"))
-        general_info["ece_3_4_ratio (3-4 / 5-17 population)"] = round(cfg["ece_3_4_ratio"], 4)
-        general_info["students_per_teacher"] = cfg["students_per_teacher"]
+        if ece_ratio is not None:
+            general_info["ece_3_4_ratio (3-4 / 5-17 population)"] = round(ece_ratio, 4)
+        general_info["students_per_teacher"] = students_per_teacher
 
     if selected_language == "French":
         ocha_excel = create_output(
