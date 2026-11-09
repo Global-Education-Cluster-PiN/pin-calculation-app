@@ -7,9 +7,11 @@
 # children aged 3-4 (5-17 figures x ratio) and the teachers ((5-17 + 3-4) / students per teacher) to the
 # results Excel: rows in "PiN TOTAL" and "PiN 3-4 -- ..." / "PiN teachers -- ..." sheets (src/add_ece_teachers.py).
 # "students_per_teacher" alone adds the teachers only (5-17 / students per teacher); left empty (None) it is 45.
+# Optional in a hybrid case: "context_db_path", the context DB file itself (e.g. in the run folder of the clustering);
+# without it, context_DB/<code>_context_db.xlsx.
 
-ACTIVE_CASE = "CMR_2026"                       # single run
-RUN_CASES = ["HTI_2026_Departement", "HTI_2026_ZMPAP"] #,"COD_2023","COD_2026","COD_2025"]    # batch run (run_all_cases.py)
+ACTIVE_CASE = "MLI_2026_refugees"                       # single run
+RUN_CASES = ["MLI_2026_refugees", "MLI_2026"]    # batch run (run_all_cases.py)
 ARCHIVE_INPUTS = True    # True: copy the Assessment dataset and the OCHA file into each successful run's archive zip; False: store only their checksums
 
 CASES = {
@@ -24,16 +26,18 @@ CASES = {
         "admin_var": "Admin_2: Cercles",
         "vector_cycle": [11, 15],
         "hybrid_country": True,            # True = hybrid country: French labels are not translated in calculatePIN
-        "mismatch_admin": True,    # scope-fix: 27 cercles in scope without MSNA take the results of their region
+        "mismatch_admin": True,    # scope-fix: cercles without MSNA and without a similar area take the results of their region; the others are extrapolated in step 2
         "no_ocha_data": False,
         "overall_country": False,  # rates per population group (the MSNA strata); a group without a stratum in a cercle gets no PiN
         "students_per_teacher": None,  # teachers only (no 3-4 y.o.); empty = 45
 
         # --- input files (country_support/MLI/09_code: 01_prepare_pop.R, 02_msna_prep.R)
         # MSNA 2026, representative at admin2 (cercle) per stratum host / idp / refugie; the population
-        # file has the 92 cercles in the scope of the analysis, without refugees (MLI_2026_refugees: with them)
+        # file has the 96 cercles in the scope of the analysis, without refugees (MLI_2026_refugees: with them)
         "excel_data_path": "input/MLI/MLI_MSNA_2026_edu_data_v1.xlsx",
-        "excel_path_ocha": "input/MLI/MLI_Population_figures_v1.xlsx",
+        "excel_path_ocha": "input/MLI/MLI_Population_figures_v2.xlsx",
+        # hardcoding the run of the clustering, not "latest", as it changes with the runs of other countries
+        "context_db_path": "../GEC-clustering-workflow/output/02_runs/20261030_140934_MLI_MSNAshort_PIN2_PCA/02_context_db/01_working_output/MLI_context_db.xlsx",
 
         "sheets": {
             "household": "main",
@@ -2569,6 +2573,10 @@ CASES["LMR_2022_EMIS"] = {
 # MLI_2026 with the refugees (population file with the refugees, columns AO/AP of the source)
 CASES["MLI_2026_refugees"] = {
     **CASES["MLI_2026"],
-    "excel_path_ocha": "input/MLI/MLI_Population_figures_with_refugees_v1.xlsx",
+    "excel_path_ocha": "input/MLI/MLI_Population_figures_with_refugees_v2.xlsx",
     "refugee_value": "refugie",
+    # --- Step 2 of the hybrid countries (False to rerun step 1)
+    "step_2_hpc": True,             # True = step 2 (run_hybrid_step2.py)
+    "updated_pin_path": "input/MLI/MLI_PiN2026_step1_to-fill_20261109-1158_filled.xlsx",
+    "covered_pin_path": "output_validation/MLI/MLI_2026_refugees/MLI_PiN2026_step1_covered-areas_20261109-1158.xlsx",
 }
