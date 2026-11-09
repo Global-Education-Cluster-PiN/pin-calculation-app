@@ -8,7 +8,8 @@ from openpyxl.styles import PatternFill, Border, Side, Font, Alignment
 from openpyxl.cell.cell import MergedCell  # Import MergedCell
 from io import BytesIO
 from src.add_PiN_severity import add_severity
-from src.calculation_for_PiN_Dimension import calculatePIN
+from src.calculation_for_PiN_Dimension import calculatePIN, out_of_scope_severity
+from src.extrapolation import OUT_OF_SCOPE_PREFIX
 from src.calculation_for_PiN_Dimension_NO_OCHA import calculatePIN_NO_OCHA
 from src.calculation_for_PiN_Dimension_NO_OCHA_2025 import calculatePIN_NO_OCHA_2025
 from src.vizualize_PiN import create_output
@@ -315,13 +316,17 @@ if ocha_data is not None:
     # Hybrid countries, step 1 (as the platform's first download): the file to fill for the areas without MSNA data
     # and the PiN of the areas covered by the MSNA. Both are the inputs of step 2 (run_hybrid_step2.py).
     if hybrid_country:
-        output_1_2025 = merge_2025_contextDB(country, ocha_data, Tot_PiN_by_admin, "context_DB")
+        output_1_2025 = merge_2025_contextDB(country, ocha_data, Tot_PiN_by_admin, "context_DB", cfg.get("context_db_path"))
         with open(out_name("step1_to-fill", "xlsx"), "wb") as f:
             f.write(create_output1_user(output_1_2025).getvalue())
         # the step 1 parameters travel in this file to step 2, as on the platform
         step1_parameters_df, step1_parameters_sheet = parameters_to_df(parameters, selected_language)
+        # areas with MSNA data outside the scope, in their own sheets: they can be reference areas in step 2, without a PiN
+        out_of_scope = out_of_scope_severity(edu_data_severity, access_var, status_var, Tot_PiN_JIAF,
+                                             ocha_data["Admin Pcode"], country, cfg.get("overall_country"))
+        out_of_scope_sheets = {f"{OUT_OF_SCOPE_PREFIX}{group}": df for group, df in out_of_scope.items()}
         with pd.ExcelWriter(out_name("step1_covered-areas", "xlsx"), engine="openpyxl") as writer:
-            for sheet_name, df in {**Tot_PiN_JIAF, step1_parameters_sheet: step1_parameters_df}.items():
+            for sheet_name, df in {**Tot_PiN_JIAF, **out_of_scope_sheets, step1_parameters_sheet: step1_parameters_df}.items():
                 df.to_excel(writer, sheet_name=str(sheet_name)[:31], index=False)
 
 

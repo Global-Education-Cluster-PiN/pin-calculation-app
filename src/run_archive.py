@@ -83,6 +83,8 @@ def make_run_archive(case, cfg, status, started, finished, log_path=None, archiv
     # hybrid step 2 reads the two step 1 files instead of the MSNA
     roles = (("ocha", "excel_path_ocha"), ("updated_pin", "updated_pin_path"), ("covered_pin", "covered_pin_path")) \
         if cfg.get("step_2_hpc", False) else (("msna", "excel_data_path"), ("ocha", "excel_path_ocha"))
+    if cfg.get("context_db_path") and not cfg.get("step_2_hpc", False):
+        roles += (("context_db", "context_db_path"),)
     for role, key in roles:
         path = cfg.get(key)
         if path and "*" in path:   # step 2 inputs given as a pattern: the newest matching file, as the run used

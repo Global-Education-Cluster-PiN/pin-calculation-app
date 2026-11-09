@@ -7,9 +7,10 @@ import pandas as pd
 import run_config
 importlib.reload(run_config)   # pick up edits to run_config.py when re-running in a notebook
 from run_config import CASES, ACTIVE_CASE
-from src.extrapolation import extrapolate_df_2025_updated
+from src.extrapolation import extrapolate_df_2025_updated, pop_out_of_scope_sheets
 from src.update_re_calculation_for_PiN import UPDATE_calculatePIN
 from src.vizualize_PiN import create_output, parameters_to_df, pop_parameters_sheet
+from src.add_ece_teachers import extend_overviews, admin_sheets, DEFAULT_STUDENTS_PER_TEACHER
 from src.snapshot_PiN import create_snapshot_PiN
 from src.snapshot_PiN_FR import create_snapshot_PiN_FR
 from src.create_map_severity import make_map_severity
@@ -40,6 +41,7 @@ ocha_data = pd.read_excel(cfg["excel_path_ocha"], sheet_name=cfg["sheets"]["ocha
 updated_2025_pin_file = pd.read_excel(newest_file(cfg["updated_pin_path"]), engine="openpyxl", skiprows=1)
 uploaded_covered_2025_pin = pd.read_excel(newest_file(cfg["covered_pin_path"]), engine="openpyxl", sheet_name=None)
 step1_parameters_df = pop_parameters_sheet(uploaded_covered_2025_pin)   # not a population group (see page 1)
+out_of_scope = pop_out_of_scope_sheets(uploaded_covered_2025_pin)   # only reference areas, without a PiN
 pin2024_file = os.path.join("pin2024_cat", f"{country_code}_PIN2024.xlsx")
 if not os.path.exists(pin2024_file):
     raise FileNotFoundError(f"No 2024 PiN file found: {pin2024_file}")
@@ -48,7 +50,8 @@ pin2024_cat = pd.read_excel(pin2024_file, sheet_name=None)
 # --- extrapolate with the delta method, then recalculate the PiN by severity
 extrapolation_notes = []   # areas that could not be extrapolated as asked: printed and written in the PiN results
 merged_df_delta_all, pin_2025_updated = extrapolate_df_2025_updated(updated_2025_pin_file, uploaded_covered_2025_pin, pin2024_cat,
-                                                                     notes=extrapolation_notes, selected_language=selected_language)
+                                                                     notes=extrapolation_notes, selected_language=selected_language,
+                                                                     out_of_scope=out_of_scope)
 for note in extrapolation_notes:
     print(f"extrapolation note -- {note['Population group']} {note['Admin Pcode']}: {note['Note']}")
 (Tot_PiN_JIAF, Tot_PiN_by_admin, final_overview_df_OCHA, final_overview_df,
@@ -63,9 +66,20 @@ for note in extrapolation_notes:
 # (files from before this sheet existed: built from the case settings, which step 1 used)
 if step1_parameters_df is None:
     step1_parameters_df, _ = parameters_to_df(case_parameters(cfg)[0], selected_language)
-ocha_excel = create_output(country_label, Tot_PiN_JIAF, final_overview_df, final_overview_df_OCHA, "PiN TOTAL", admin_var,
+# Children 3-4 and teachers, as in step 1 (cases with "ece_3_4_ratio" and/or "students_per_teacher"): only in the
+# results Excel (src/add_ece_teachers.py); the parameters sheet of step 1 already has these settings
+excel_overview_df, excel_overview_df_OCHA = final_overview_df, final_overview_df_OCHA
+ece_sheets, ece_total_labels = None, ()
+if cfg.get("ece_3_4_ratio") is not None or "students_per_teacher" in cfg:
+    ece_ratio = cfg.get("ece_3_4_ratio")
+    students_per_teacher = cfg.get("students_per_teacher") or DEFAULT_STUDENTS_PER_TEACHER
+    excel_overview_df, excel_overview_df_OCHA, ece_total_labels = extend_overviews(
+        final_overview_df, final_overview_df_OCHA, ece_ratio, students_per_teacher)
+    ece_sheets = admin_sheets(Tot_PiN_by_admin, Tot_PiN_JIAF, ece_ratio, students_per_teacher, final_overview_df)
+ocha_excel = create_output(country_label, Tot_PiN_JIAF, excel_overview_df, excel_overview_df_OCHA, "PiN TOTAL", admin_var,
                            ocha=True, tot_severity=Tot_PiN_by_admin, selected_language=selected_language,
-                           ocha_data=ocha_data, parameters_df=step1_parameters_df, notes=extrapolation_notes)
+                           ocha_data=ocha_data, parameters_df=step1_parameters_df, notes=extrapolation_notes,
+                           extra_sheets=ece_sheets, extra_total_labels=ece_total_labels)
 with open(out_name("step2_results", "xlsx"), "wb") as f:
     f.write(ocha_excel.getvalue())
 

@@ -13,7 +13,8 @@ from src.extrapolation import has_2025_data
 
 ###################################################################################################################################################
 
-def merge_2025_contextDB (country , ocha_data , pin_2025 , context_db_folder ):
+def merge_2025_contextDB (country , ocha_data , pin_2025 , context_db_folder , context_path = None ):
+    # context_path: the context DB itself (case setting "context_db_path"); without it, <code>_context_db.xlsx in the folder
 
 
     country_code = country.split("--")[-1].strip()
@@ -29,7 +30,7 @@ def merge_2025_contextDB (country , ocha_data , pin_2025 , context_db_folder ):
 
     ## read context database for the country
     context_fname = f"{country_code}_context_db.xlsx"
-    context_path  = os.path.join(context_db_folder, context_fname)
+    context_path  = context_path or os.path.join(context_db_folder, context_fname)
     if not os.path.exists(context_path):
         raise FileNotFoundError(f"No context file found at {context_path}")
     context_db = pd.read_excel(context_path)

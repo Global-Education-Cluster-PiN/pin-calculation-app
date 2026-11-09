@@ -1092,6 +1092,30 @@ def calculate_prop(df, admin_var, pop_group_var, target_var, agg_var='weights', 
     return df_overall
 
 ##--------------------------------------------------------------------------------------------
+def out_of_scope_severity(edu_data, access_var, pop_group_var, groups, in_scope, country, overall_country=None,
+                          admin_var='admin_hno'):
+    """
+    Hybrid step 1: % by severity of the areas with MSNA data outside the population file, {group: table}, calculated
+    as for the areas in scope. They can be reference areas in step 2 but have no population, so they get no PiN.
+    """
+    overall = (country in OVERALL_COUNTRIES) if overall_country is None else overall_country
+    df = edu_data[edu_data[access_var].notna() & edu_data['severity_category'].notna()]
+    df = df[~df[admin_var].isin(in_scope)]
+    labels = {2.0: '% severity levels 1-2', 3.0: '% severity level 3', 4.0: '% severity level 4', 5.0: '% severity level 5'}
+    tables = {}
+    if df.empty:
+        return tables
+    shares = calculate_prop(df=df, admin_var=admin_var, pop_group_var=pop_group_var, target_var='severity_category', overall=overall)
+    shares.columns = [float(col[-1]) for col in shares.columns]
+    shares.index = shares.index.droplevel(list(range(shares.index.nlevels - 2)))   # the grouping repeats admin and group
+    shares = (shares.reindex(columns=list(labels), fill_value=0) * 100).round(1).rename(columns=labels).reset_index()
+    for group in groups:
+        table = shares[shares[pop_group_var] == group].drop(columns=pop_group_var)
+        if not table.empty:
+            tables[group] = table.rename(columns={admin_var: 'Admin Pcode'}).assign(**{'Population group': group, 'Scope': 'Out of scope'})
+    return tables
+
+##--------------------------------------------------------------------------------------------
 def empty_prop_table(all_df, admin_var, pop_group_var, target_var, overall=False):
     """
     Result of calculate_prop for a subset without children (e.g. no child of secondary-school age):

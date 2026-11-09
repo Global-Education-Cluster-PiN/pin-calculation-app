@@ -18,6 +18,7 @@ stable_cols = [
         "Les besoins en matière d'éducation sont stables (cochez « X » si aucun changement par rapport à l'année dernière)"
     ]
 pct_2025_cols = ['% severity levels 1-2', '% severity level 3', '% severity level 4', '% severity level 5']
+OUT_OF_SCOPE_PREFIX = "Out of scope -- "   # sheets of the covered areas file with the areas outside the scope
 delta_cols = [
         "Education needs decreased (tick 'X' if improved from last year)",
         "Les besoins en matière d'éducation ont diminué (cochez « X » si la situation s'est améliorée par rapport à l'année dernière)",
@@ -35,6 +36,11 @@ def has_2025_data(df):
     if not cols:
         return pd.Series(True, index=df.index)
     return df[cols].apply(pd.to_numeric, errors='coerce').fillna(0).sum(axis=1) > 0
+## --------------------------------------------------------------------------------------------------------------
+def pop_out_of_scope_sheets(sheets):
+    """Remove the sheets of the areas outside the scope from a dict of sheets read with sheet_name=None and return them,
+    {group: table}. They are not population groups: only reference areas, without a PiN (step 1, covered areas file)."""
+    return {name[len(OUT_OF_SCOPE_PREFIX):]: sheets.pop(name) for name in list(sheets) if str(name).startswith(OUT_OF_SCOPE_PREFIX)}
 ## --------------------------------------------------------------------------------------------------------------
 def match_pin2024_sheets(pin2025_by_status, pin2024_cat):
     """Name the 2024 sheets as the population groups of the step 1 file, ignoring case and spaces ('IDP' = 'idp').
@@ -56,11 +62,15 @@ NOTE_TEXT = {
         "no_reference": "no reference area with 2025 data: 2024 values kept (needs considered stable)",
         "no_reference_data": "the reference area {ref} has no usable 2024 and 2025 data: 2024 values kept (needs considered stable)",
         "no_2024": "no 2024 PiN for this area: not extrapolated, the area is left out",
+        "chosen_replaced": "the chosen reference area {chosen} has no data in this population group: {ref} used instead",
+        "current_values": "the reference area {ref} has no PiN last year: its current MSNA values are used",
     },
     "French": {
         "no_reference": "aucune zone de référence avec des données 2025 : valeurs 2024 conservées (besoins considérés stables)",
         "no_reference_data": "la zone de référence {ref} n'a pas de données 2024 et 2025 utilisables : valeurs 2024 conservées (besoins considérés stables)",
         "no_2024": "pas de PiN 2024 pour cette zone : non extrapolée, la zone n'est pas incluse",
+        "chosen_replaced": "la zone de référence choisie {chosen} n'a pas de données pour ce groupe de population : {ref} utilisée à la place",
+        "current_values": "la zone de référence {ref} n'a pas de PiN l'année dernière : ses valeurs MSNA actuelles sont utilisées",
     },
 }
 ## --------------------------------------------------------------------------------------------------------------
@@ -87,16 +97,18 @@ def find_valid_ref(row, valid_list):
 
 ############################################################################################################
 
-def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat, notes=None, selected_language='English'):
+def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat, notes=None, selected_language='English', out_of_scope=None):
     # notes: optional list; one row is added (population group, area, reference area, note) for each area that could
     # not be extrapolated as asked, to be shown to the user and in the PiN results
+    # out_of_scope: {group: % by severity of the areas with MSNA data outside the scope}: valid reference areas, without a PiN
 
     print(base_2025.columns)
+    out_of_scope = out_of_scope or {}
     note_text = NOTE_TEXT.get(selected_language, NOTE_TEXT["English"])
-    def add_note(category, admin, ref, key):
+    def add_note(category, admin, ref, key, chosen=None):
         if notes is not None:
             notes.append({"Population group": category, "Admin Pcode": admin, "Reference area": ref or "",
-                          "Note": note_text[key].format(ref=ref)})
+                          "Note": note_text[key].format(ref=ref, chosen=chosen)})
 
     pin2024_cat = match_pin2024_sheets(pin2025_by_status, pin2024_cat)
 
@@ -130,6 +142,8 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat, notes
         # covered (and valid reference areas): only the areas with 2025 MSNA results in this population group
         df_2025 = df_2025[has_2025_data(df_2025)]
         list_2025_cat = df_2025["Admin Pcode"].dropna().unique().tolist()
+        if category in out_of_scope:
+            list_2025_cat += out_of_scope[category]["Admin Pcode"].dropna().unique().tolist()
         list_2025_category[category] = {"list_2025": list_2025_cat}
 
 
@@ -278,6 +292,12 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat, notes
         # Assign admin_ref using the category-specific list_2025
         df_delta['admin_ref'] = df_delta.apply(lambda row: find_valid_ref(row, valid_refs), axis=1)
 
+        # the reference chosen in the filled file has no data in this group, and another one is used: tell the user
+        for _, row in df_delta.iterrows():
+            chosen = row[ref_user_admin]
+            if pd.notna(chosen) and row['admin_ref'] and chosen != row['admin_ref']:
+                add_note(category, row[admin_var], row['admin_ref'], "chosen_replaced", chosen=chosen)
+
         # areas without a valid reference in this population group keep their 2024 values (step 5); they are no longer
         # added to the shared list_same, which applied to every population group and duplicated the area
 
@@ -305,6 +325,9 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat, notes
         keep_cols = [first_col_2025] + percent_cols
         df_2025 = df_2025.loc[:, keep_cols]
         df_2025 = df_2025.rename(columns={first_col_2025: "Admin Pcode REF"})
+        if category in out_of_scope:   # only to look up the reference areas: the PiN uses pin_2025_covered
+            df_2025 = pd.concat([df_2025, out_of_scope[category].rename(columns={"Admin Pcode": "Admin Pcode REF"})
+                                 .reindex(columns=df_2025.columns)], ignore_index=True)
 
         # Clean and prepare 2024 data
         if category not in pin2024_cat:
@@ -407,7 +430,15 @@ def extrapolate_df_2025_updated(base_2025, pin2025_by_status, pin2024_cat, notes
                 base_col = col[len("new_"):].replace("_extrapolated", "_2024_extrapolation_base")
                 df[norm_col] = df[col] / sum_col.where(~no_ref) * 100
                 df.loc[no_ref, norm_col] = df.loc[no_ref, base_col]
-            for _, row in df[no_ref].iterrows():
+            # reference with MSNA data but no PiN last year: no change to calculate, the area takes its current values
+            levels = [col[len("new_"):].replace("_extrapolated", "") for col in new_cols]
+            current = no_ref & df[[f"{level}_25" for level in levels]].notna().all(axis=1) \
+                             & df[[f"{level}_24" for level in levels]].isna().all(axis=1)
+            for col, level in zip(new_cols, levels):
+                df.loc[current, col.replace("new_", "new_normalized_")] = df.loc[current, f"{level}_25"]
+            for _, row in df[current].iterrows():
+                add_note(category, row["Admin Pcode"], row.get("admin_ref"), "current_values")
+            for _, row in df[no_ref & ~current].iterrows():
                 ref = row.get("admin_ref")
                 add_note(category, row["Admin Pcode"], ref, "no_reference_data" if isinstance(ref, str) and ref else "no_reference")
 
