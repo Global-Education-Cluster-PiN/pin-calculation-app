@@ -29,7 +29,7 @@ CASES = {
         "mismatch_admin": True,    # scope-fix: cercles without MSNA and without a similar area take the results of their region; the others are extrapolated in step 2
         "no_ocha_data": False,
         "overall_country": False,  # rates per population group (the MSNA strata); a group without a stratum in a cercle gets no PiN
-        "students_per_teacher": None,  # teachers only (no 3-4 y.o.); empty = 45
+        "students_per_teacher": 50,  # teachers only (no 3-4 y.o.); empty = 45
 
         # --- input files (country_support/MLI/09_code: 01_prepare_pop.R, 02_msna_prep.R)
         # MSNA 2026, representative at admin2 (cercle) per stratum host / idp / refugie; the population
@@ -2577,6 +2577,6 @@ CASES["MLI_2026_refugees"] = {
     "refugee_value": "refugie",
     # --- Step 2 of the hybrid countries (False to rerun step 1)
     "step_2_hpc": True,             # True = step 2 (run_hybrid_step2.py)
-    "updated_pin_path": "input/MLI/MLI_PiN2026_step1_to-fill_20261109-1158_filled.xlsx",
-    "covered_pin_path": "output_validation/MLI/MLI_2026_refugees/MLI_PiN2026_step1_covered-areas_20261109-1158.xlsx",
+    "updated_pin_path": "input/MLI/MLI_PiN2026_step1_to-fill_20261111-1302_filled.xlsx",
+    "covered_pin_path": "output_validation/MLI/MLI_2026_refugees/MLI_PiN2026_step1_covered-areas_20261111-1302.xlsx",
 }
